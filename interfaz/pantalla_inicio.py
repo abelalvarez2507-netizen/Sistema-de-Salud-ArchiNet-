@@ -34,7 +34,7 @@ RUTA_IMAGENES = os.path.join(
 # Color de la imagen de fondo (se usa mientras carga o si no hay Pillow).
 COLOR_LIENZO_IMAGEN = "#F9FAFC"
 
-# Colores del logo ArchiNet (azul y verde de la imagen de referencia).
+# Colores del logo Archinet (azul y verde de la imagen de referencia).
 COLOR_LOGO_AZUL = "#1B7FC4"
 COLOR_LOGO_VERDE = "#1E9F5F"
 COLOR_LINEA_LOGO = "#4CAF73"
@@ -53,7 +53,7 @@ class PantallaInicio:
         # =====================================================
 
         self.ventana.title(
-            "ArchiNet - Sistema de Salud Rural"
+            "Archinet - Sistema de Salud Rural"
         )
 
         self.ventana.geometry(
@@ -186,16 +186,16 @@ class PantallaInicio:
         self._fuente_logo = tkfont.Font(
             root=self.ventana, font=FUENTE_LOGO_INICIO
         )
-        self._id_logo_salu = lienzo.create_text(
+        self._id_logo_archi = lienzo.create_text(
             0, 0,
-            text="Salu",
+            text="Archi",
             anchor="w",
             font=FUENTE_LOGO_INICIO,
             fill=COLOR_LOGO_AZUL,
         )
-        self._id_logo_pro = lienzo.create_text(
+        self._id_logo_net = lienzo.create_text(
             0, 0,
-            text="Pro",
+            text="net",
             anchor="w",
             font=FUENTE_LOGO_INICIO,
             fill=COLOR_LOGO_VERDE,
@@ -507,11 +507,11 @@ class PantallaInicio:
         if self._id_icono is not None:
             lienzo.coords(self._id_icono, centro, y0)
         y_nombre = y0 + ALTO_ICONO + 38
-        ancho_salu = self._fuente_logo.measure("Salu")
-        ancho_total = ancho_salu + self._fuente_logo.measure("Pro")
+        ancho_archi = self._fuente_logo.measure("Archi")
+        ancho_total = ancho_archi + self._fuente_logo.measure("net")
         x_nombre = centro - ancho_total // 2
-        lienzo.coords(self._id_logo_salu, x_nombre, y_nombre)
-        lienzo.coords(self._id_logo_pro, x_nombre + ancho_salu, y_nombre)
+        lienzo.coords(self._id_logo_archi, x_nombre, y_nombre)
+        lienzo.coords(self._id_logo_net, x_nombre + ancho_archi, y_nombre)
         lienzo.coords(
             self._id_linea,
             centro - 70, y0 + ALTO_ICONO + 78,
@@ -549,7 +549,7 @@ class PantallaInicio:
     # =========================================================
 
     def salir(self):
-        """Cierra completamente ArchiNet y todas sus ventanas."""
+        """Cierra completamente Archinet y todas sus ventanas."""
         try:
             self.ventana.quit()
         except tk.TclError:

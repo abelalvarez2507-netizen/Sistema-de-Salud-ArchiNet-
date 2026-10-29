@@ -54,7 +54,7 @@ class PantallaInterna(tk.Frame):
     anterior en lugar de cerrar la aplicación.
     """
 
-    def __init__(self, master, volver_callback=None, titulo="ArchiNet"):
+    def __init__(self, master, volver_callback=None, titulo="Archinet"):
         super().__init__(
             master,
             bg=COLOR_FONDO
@@ -168,7 +168,7 @@ class VentanaPrincipal:
         self._callback_volver_actual = None
 
         self.ventana.title(
-            "ArchiNet - Sistema de Salud Rural"
+            "Archinet - Sistema de Salud Rural"
         )
 
         self.ventana.geometry(
@@ -323,7 +323,7 @@ class VentanaPrincipal:
     # =========================================================
 
     def crear_interfaz(self):
-        """Construye el panel administrativo principal de ArchiNet."""
+        """Construye el panel administrativo principal de Archinet."""
 
         self.sistema.actualizar_citas_vencidas()
         instalar_navegacion(
@@ -1866,7 +1866,7 @@ class VentanaPrincipal:
         tk.Label(
             pie,
             text=(
-                "ArchiNet • Sistema de Salud Rural • "
+                "Archinet • Sistema de Salud Rural • "
                 "Panel administrativo"
             ),
             font=FUENTE_PEQUENA,
@@ -2059,7 +2059,7 @@ class VentanaPrincipal:
 
     def _crear_pantalla_interna(
         self,
-        titulo="ArchiNet"
+        titulo="Archinet"
     ):
         """Crea una pantalla dentro de la misma ventana principal."""
 
@@ -2583,7 +2583,7 @@ class VentanaPrincipal:
             "Reportes y estadísticas",
             (
                 "Consulte los principales indicadores "
-                "y reportes generados por ArchiNet."
+                "y reportes generados por Archinet."
             ),
             [
                 (

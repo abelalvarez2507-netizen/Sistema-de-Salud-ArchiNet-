@@ -96,7 +96,7 @@ class PantallaEnfermeria:
             self.sistema.cerrar()
             raise ValueError("La cuenta ya no está asignada a enfermería.")
         self.enfermero_actual = personal[0]
-        self.ventana.title("ArchiNet - Portal de Enfermería")
+        self.ventana.title("Archinet - Portal de Enfermería")
         self.ventana.configure(bg=COLOR_FONDO)
         self.mostrar_inicio()
 

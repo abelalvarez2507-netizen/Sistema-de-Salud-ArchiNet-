@@ -77,7 +77,7 @@ def configurar_ventana(ventana):
 
 def configurar_estilos():
     """
-    Configura los estilos generales utilizados por ArchiNet.
+    Configura los estilos generales utilizados por Archinet.
     """
 
     estilo = ttk.Style()
@@ -92,7 +92,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "ArchiNet.TButton",
+        "Archinet.TButton",
         font=FUENTE_BOTON,
         foreground=COLOR_BLANCO,
         background=COLOR_ROJO,
@@ -102,7 +102,7 @@ def configurar_estilos():
     )
 
     estilo.map(
-        "ArchiNet.TButton",
+        "Archinet.TButton",
         background=[
             ("active", COLOR_ROJO_CLARO),
             ("pressed", COLOR_ROJO_OSCURO)
@@ -118,7 +118,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "ArchiNet.Grande.TButton",
+        "Archinet.Grande.TButton",
         font=FUENTE_BOTON_GRANDE,
         foreground=COLOR_BLANCO,
         background=COLOR_ROJO,
@@ -128,7 +128,7 @@ def configurar_estilos():
     )
 
     estilo.map(
-        "ArchiNet.Grande.TButton",
+        "Archinet.Grande.TButton",
         background=[
             ("active", COLOR_ROJO_CLARO),
             ("pressed", COLOR_ROJO_OSCURO)
@@ -140,7 +140,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "ArchiNet.TLabel",
+        "Archinet.TLabel",
         background=COLOR_FONDO,
         foreground=COLOR_TEXTO,
         font=FUENTE_NORMAL
@@ -151,7 +151,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "ArchiNet.Titulo.TLabel",
+        "Archinet.Titulo.TLabel",
         background=COLOR_FONDO,
         foreground=COLOR_TEXTO,
         font=FUENTE_TITULO
@@ -162,7 +162,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "ArchiNet.Subtitulo.TLabel",
+        "Archinet.Subtitulo.TLabel",
         background=COLOR_FONDO,
         foreground=COLOR_GRIS_CLARO,
         font=FUENTE_SUBTITULO
@@ -173,7 +173,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "ArchiNet.Seccion.TLabel",
+        "Archinet.Seccion.TLabel",
         background=COLOR_PANEL,
         foreground=COLOR_TEXTO,
         font=FUENTE_SECCION
@@ -184,7 +184,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "ArchiNet.TEntry",
+        "Archinet.TEntry",
         font=FUENTE_NORMAL,
         fieldbackground=COLOR_PANEL_CLARO,
         foreground=COLOR_TEXTO,
@@ -198,7 +198,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "ArchiNet.TCombobox",
+        "Archinet.TCombobox",
         font=FUENTE_NORMAL,
         fieldbackground=COLOR_PANEL_CLARO,
         background=COLOR_PANEL_CLARO,
@@ -212,13 +212,13 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "ArchiNet.TNotebook",
+        "Archinet.TNotebook",
         background=COLOR_FONDO,
         borderwidth=0
     )
 
     estilo.configure(
-        "ArchiNet.TNotebook.Tab",
+        "Archinet.TNotebook.Tab",
         font=FUENTE_NORMAL_BOLD,
         background=COLOR_PANEL,
         foreground=COLOR_GRIS_CLARO,
@@ -226,7 +226,7 @@ def configurar_estilos():
     )
 
     estilo.map(
-        "ArchiNet.TNotebook.Tab",
+        "Archinet.TNotebook.Tab",
         background=[
             ("selected", COLOR_ROJO)
         ],
@@ -249,7 +249,7 @@ def crear_boton(
     grande=False
 ):
     """
-    Crea un botón con el estilo visual de ArchiNet.
+    Crea un botón con el estilo visual de Archinet.
 
     Parámetros:
         parent   -> ventana o Frame donde aparecerá
@@ -472,7 +472,7 @@ def crear_entry(
     ancho=30
 ):
     """
-    Crea un campo de texto con el estilo de ArchiNet.
+    Crea un campo de texto con el estilo de Archinet.
     """
 
     entrada = tk.Entry(
@@ -594,7 +594,7 @@ def crear_linea_roja(parent):
 
 def inicializar_estilos(ventana):
     """
-    Función general para iniciar los estilos de ArchiNet.
+    Función general para iniciar los estilos de Archinet.
     """
 
     configurar_ventana(

@@ -1,4 +1,4 @@
-"""Autenticación por rol para los portales de ArchiNet."""
+"""Autenticación por rol para los portales de Archinet."""
 
 from dataclasses import dataclass
 import hashlib
@@ -34,7 +34,7 @@ class ServicioAutenticacion:
     ITERACIONES_PASSWORD = 310_000
     LONGITUD_SAL = 16
     LONGITUD_HASH = 32
-    CODIGO_MEDICO_REGISTRO = "ArchiNet"
+    CODIGO_MEDICO_REGISTRO = "saludpro2026"
 
     def __init__(self, repositorio=None):
         self.repositorio = repositorio or RepositorioSalud()

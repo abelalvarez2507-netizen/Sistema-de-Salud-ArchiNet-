@@ -2,7 +2,7 @@ from servicios.validaciones import validar_edad, validar_nombre
 
 
 class Persona:
-    """Clase base para las personas que interactúan con ArchiNet."""
+    """Clase base para las personas que interactúan con Archinet."""
 
     def __init__(self, nombre, edad):
         self.nombre = nombre

@@ -1,4 +1,4 @@
-"""Herramientas comunes de desplazamiento y navegación para ArchiNet."""
+"""Herramientas comunes de desplazamiento y navegación para Archinet."""
 
 import time
 import tkinter as tk

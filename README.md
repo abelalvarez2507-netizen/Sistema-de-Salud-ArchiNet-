@@ -1,8 +1,8 @@
-# ArchiNet
+# Archinet
 
 ## Sistema de gestión para un establecimiento de salud rural
 
-ArchiNet es un prototipo académico de escritorio desarrollado
+Archinet es un prototipo académico de escritorio desarrollado
 en Python para gestionar pacientes, profesionales de salud, citas, atenciones
 médicas e informes básicos en un establecimiento de salud rural. Utiliza
 Tkinter para la interfaz gráfica y SQLite para guardar la información.
@@ -104,17 +104,45 @@ Tkinter para la interfaz gráfica y SQLite para guardar la información.
 ## 4. Arquitectura
 
 ```text
-ArchiNet/
-├── componentes/       # Formularios de acceso, registro y verificación
-├── datos/             # Base de datos SQLite local
-├── imagenes/          # Recursos visuales de la interfaz
-├── interfaz/          # Inicio, módulos por rol y panel administrativo
-├── modelos/           # Entidades del sistema
-├── pruebas/           # Pruebas automatizadas existentes
-├── servicios/         # Autenticación, reglas, persistencia y reportes
-├── main.py            # Punto de entrada
-├── requirements.txt   # Dependencias de Python
-└── README.md          # Guía del proyecto
+SistemaRural-PE/
+├── interfaz/
+│   ├── pantalla_inicio.py
+│   ├── pantalla_paciente.py
+│   ├── pantalla_profesional.py
+│   ├── pantalla_enfermeria.py
+│   ├── pantalla_administrativa.py
+│   ├── navegacion.py
+│   └── estilos.py
+├── componentes/
+│   └── modal_verificador.py
+├── modelos/
+│   ├── persona.py
+│   ├── personal.py
+│   ├── personal_enfermeria.py
+│   ├── paciente.py
+│   ├── personal_salud.py
+│   ├── cita.py
+│   ├── atencion_medica.py
+│   └── medicamento_recetado.py
+├── servicios/
+│   ├── sistema_salud.py
+│   ├── repositorio.py
+│   ├── gestor_bd.py
+│   ├── fabrica.py
+│   ├── contratos.py
+│   ├── seguridad.py
+│   ├── autenticacion.py
+│   ├── validaciones.py
+│   └── reportes.py
+├── pruebas/
+│   ├── test_sistema.py
+│   └── test_patrones.py
+├── datos/                  (salud.db se crea al ejecutar)
+├── imagenes/
+│   └── icono_inicio.png
+├── main.py
+├── requirements.txt
+└── README.md
 ```
 
 ## 5. Instalación
@@ -149,7 +177,7 @@ correspondiente.
   paciente valida su código y DNI. Profesional y enfermería pueden vincularse a
   un registro existente mediante el DNI o crear uno nuevo; su código de personal
   se genera automáticamente. Se solicita el código médico secreto compartido
-  `ArchiNet`. Los campos de DNI aceptan exactamente 8
+  `saludpro2026`. Los campos de DNI aceptan exactamente 8
   dígitos y los nombres solo letras, tildes, ñ y espacios. Todas las altas nuevas
   solicitan aceptar los términos y condiciones; el inicio de sesión de cuentas
   existentes no.

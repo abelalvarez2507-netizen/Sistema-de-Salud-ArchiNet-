@@ -1,4 +1,4 @@
-"""Validaciones y normalizaciones compartidas del dominio ArchiNet."""
+"""Validaciones y normalizaciones compartidas del dominio Archinet."""
 
 import re
 import unicodedata

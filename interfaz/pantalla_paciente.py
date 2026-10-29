@@ -66,7 +66,7 @@ class PantallaPaciente:
         # =====================================================
 
         self.ventana.title(
-            "ArchiNet - Portal del Paciente"
+            "Archinet - Portal del Paciente"
         )
 
         self.ventana.geometry(

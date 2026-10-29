@@ -53,7 +53,7 @@ class PantallaProfesional:
         self._temporizador = None
         self._pantalla_en_edicion = False
         self._vista_actual = "agenda"
-        self.ventana.title("ArchiNet - Portal del Profesional")
+        self.ventana.title("Archinet - Portal del Profesional")
         self.ventana.configure(bg=COLOR_FONDO)
         self.mostrar_agenda()
 

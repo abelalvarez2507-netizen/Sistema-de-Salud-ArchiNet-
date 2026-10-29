@@ -44,11 +44,11 @@ TERMINOS_CONDICIONES = """TÉRMINOS Y CONDICIONES – ARCHINET
 
 1. Aceptación de los términos
 
-Al ingresar y utilizar la plataforma ArchiNet, el usuario acepta estos términos y condiciones. Si no está de acuerdo con alguno de ellos, deberá evitar utilizar los servicios de la plataforma.
+Al ingresar y utilizar la plataforma Archinet, el usuario acepta estos términos y condiciones. Si no está de acuerdo con alguno de ellos, deberá evitar utilizar los servicios de la plataforma.
 
-2. Finalidad de ArchiNet
+2. Finalidad de Archinet
 
-ArchiNet es una plataforma digital diseñada para facilitar el acceso a información y servicios relacionados con la atención de salud en comunidades rurales.
+Archinet es una plataforma digital diseñada para facilitar el acceso a información y servicios relacionados con la atención de salud en comunidades rurales.
 
 La plataforma puede permitir el registro de pacientes, consulta de información, seguimiento de atenciones, comunicación con personal de salud y otras funciones relacionadas con la gestión de servicios de salud.
 
@@ -64,13 +64,13 @@ El usuario se compromete a:
 
 4. Información de salud
 
-La información relacionada con la salud es considerada información sensible. ArchiNet deberá utilizarla únicamente para las finalidades informadas al usuario y aplicar medidas de seguridad para evitar accesos no autorizados.
+La información relacionada con la salud es considerada información sensible. Archinet deberá utilizarla únicamente para las finalidades informadas al usuario y aplicar medidas de seguridad para evitar accesos no autorizados.
 
 Cuando corresponda, el tratamiento de datos personales deberá contar con el consentimiento válido del titular, de acuerdo con la normativa peruana aplicable.
 
 5. Protección de datos personales
 
-ArchiNet se compromete a proteger los datos personales recopilados mediante la plataforma y utilizarlos únicamente para las finalidades informadas.
+Archinet se compromete a proteger los datos personales recopilados mediante la plataforma y utilizarlos únicamente para las finalidades informadas.
 
 El usuario podrá ejercer los derechos que correspondan sobre sus datos personales, como acceso, rectificación, cancelación u oposición, conforme a la legislación peruana aplicable.
 
@@ -82,13 +82,13 @@ Los usuarios también son responsables de proteger sus contraseñas y evitar com
 
 7. Información médica
 
-La información proporcionada por ArchiNet tiene como finalidad apoyar la gestión y atención de los servicios de salud.
+La información proporcionada por Archinet tiene como finalidad apoyar la gestión y atención de los servicios de salud.
 
 La plataforma no sustituye la evaluación, diagnóstico o tratamiento realizado por un profesional de la salud.
 
 8. Disponibilidad del servicio
 
-ArchiNet buscará mantener disponible la plataforma, pero podrían producirse interrupciones por mantenimiento, problemas de conectividad, fallas técnicas o circunstancias externas.
+Archinet buscará mantener disponible la plataforma, pero podrían producirse interrupciones por mantenimiento, problemas de conectividad, fallas técnicas o circunstancias externas.
 
 9. Responsabilidad del usuario
 
@@ -98,17 +98,17 @@ No deberá ingresar información falsa, utilizar cuentas de terceros ni realizar
 
 10. Modificaciones
 
-ArchiNet podrá actualizar estos términos cuando sea necesario para mejorar el servicio, incorporar nuevas funcionalidades o cumplir cambios en la normativa.
+Archinet podrá actualizar estos términos cuando sea necesario para mejorar el servicio, incorporar nuevas funcionalidades o cumplir cambios en la normativa.
 
 Las modificaciones serán comunicadas mediante la plataforma cuando corresponda.
 
 11. Contacto
 
-Para consultas, solicitudes relacionadas con los datos personales o problemas con la plataforma, el usuario podrá comunicarse mediante los canales oficiales de ArchiNet.
+Para consultas, solicitudes relacionadas con los datos personales o problemas con la plataforma, el usuario podrá comunicarse mediante los canales oficiales de Archinet.
 
 12. Aceptación
 
-Al seleccionar “Acepto los términos y condiciones”, el usuario declara haber leído y comprendido las condiciones de uso de ArchiNet."""
+Al seleccionar “Acepto los términos y condiciones”, el usuario declara haber leído y comprendido las condiciones de uso de Archinet."""
 
 
 class ModalVerificador(tk.Frame):
@@ -146,7 +146,7 @@ class ModalVerificador(tk.Frame):
         self.campos = {}
 
         nombre, _ = self.ROLES[rol]
-        parent.title(f"ArchiNet · {nombre}")
+        parent.title(f"Archinet · {nombre}")
         self.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.lift()
         self.bind("<Escape>", lambda _evento: self.destroy())
