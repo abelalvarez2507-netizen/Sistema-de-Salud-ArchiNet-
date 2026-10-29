@@ -6,7 +6,7 @@ from interfaz.pantalla_inicio import PantallaInicio
 
 def main():
     """
-    Punto de entrada principal de SaluPro.
+    Punto de entrada principal de ArchiNet.
     """
 
     ventana = tk.Tk()

@@ -66,7 +66,7 @@ class PantallaPaciente:
         # =====================================================
 
         self.ventana.title(
-            "SaluPro - Portal del Paciente"
+            "ArchiNet - Portal del Paciente"
         )
 
         self.ventana.geometry(
@@ -174,7 +174,7 @@ class PantallaPaciente:
 
         logo = tk.Label(
             barra_superior,
-            text="SALUPRO",
+            text="ARCHINET",
             font=FUENTE_LOGO,
             fg=COLOR_TEXTO,
             bg=COLOR_FONDO
@@ -381,7 +381,7 @@ class PantallaPaciente:
 
         tk.Label(
             barra,
-            text="SALUPRO",
+            text="ARCHINET",
             font=FUENTE_LOGO,
             fg=COLOR_TEXTO,
             bg=COLOR_FONDO

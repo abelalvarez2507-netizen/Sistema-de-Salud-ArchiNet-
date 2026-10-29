@@ -34,7 +34,7 @@ RUTA_IMAGENES = os.path.join(
 # Color de la imagen de fondo (se usa mientras carga o si no hay Pillow).
 COLOR_LIENZO_IMAGEN = "#F9FAFC"
 
-# Colores del logo SaluPro (azul y verde de la imagen de referencia).
+# Colores del logo ArchiNet (azul y verde de la imagen de referencia).
 COLOR_LOGO_AZUL = "#1B7FC4"
 COLOR_LOGO_VERDE = "#1E9F5F"
 COLOR_LINEA_LOGO = "#4CAF73"
@@ -53,7 +53,7 @@ class PantallaInicio:
         # =====================================================
 
         self.ventana.title(
-            "SaluPro - Sistema de Salud Rural"
+            "ArchiNet - Sistema de Salud Rural"
         )
 
         self.ventana.geometry(
@@ -165,7 +165,7 @@ class PantallaInicio:
         self._id_fondo = lienzo.create_image(0, 0, anchor="nw")
 
         # =====================================================
-        # LOGO / NOMBRE SALUPRO (icono + nombre en azul y verde)
+        # LOGO / NOMBRE ARCHINET (icono + nombre en azul y verde)
         # =====================================================
 
         self._id_icono = None
@@ -217,7 +217,7 @@ class PantallaInicio:
 
         self._id_titulo = lienzo.create_text(
             0, 0,
-            text="BIENVENIDO A SALUPRO",
+            text="BIENVENIDO A ARCHINET",
             font=FUENTE_TITULO,
             fill=COLOR_TEXTO,
         )
@@ -549,7 +549,7 @@ class PantallaInicio:
     # =========================================================
 
     def salir(self):
-        """Cierra completamente SaluPro y todas sus ventanas."""
+        """Cierra completamente ArchiNet y todas sus ventanas."""
         try:
             self.ventana.quit()
         except tk.TclError:

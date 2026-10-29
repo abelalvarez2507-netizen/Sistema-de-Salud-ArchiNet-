@@ -3,7 +3,7 @@ from tkinter import ttk
 
 
 # =========================================================
-# COLORES PRINCIPALES DE SALUPRO
+# COLORES PRINCIPALES DE ARCHINET
 # =========================================================
 
 COLOR_FONDO = "#F3F7F4"
@@ -77,7 +77,7 @@ def configurar_ventana(ventana):
 
 def configurar_estilos():
     """
-    Configura los estilos generales utilizados por SaluPro.
+    Configura los estilos generales utilizados por ArchiNet.
     """
 
     estilo = ttk.Style()
@@ -92,7 +92,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "SaluPro.TButton",
+        "ArchiNet.TButton",
         font=FUENTE_BOTON,
         foreground=COLOR_BLANCO,
         background=COLOR_ROJO,
@@ -102,7 +102,7 @@ def configurar_estilos():
     )
 
     estilo.map(
-        "SaluPro.TButton",
+        "ArchiNet.TButton",
         background=[
             ("active", COLOR_ROJO_CLARO),
             ("pressed", COLOR_ROJO_OSCURO)
@@ -118,7 +118,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "SaluPro.Grande.TButton",
+        "ArchiNet.Grande.TButton",
         font=FUENTE_BOTON_GRANDE,
         foreground=COLOR_BLANCO,
         background=COLOR_ROJO,
@@ -128,7 +128,7 @@ def configurar_estilos():
     )
 
     estilo.map(
-        "SaluPro.Grande.TButton",
+        "ArchiNet.Grande.TButton",
         background=[
             ("active", COLOR_ROJO_CLARO),
             ("pressed", COLOR_ROJO_OSCURO)
@@ -140,7 +140,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "SaluPro.TLabel",
+        "ArchiNet.TLabel",
         background=COLOR_FONDO,
         foreground=COLOR_TEXTO,
         font=FUENTE_NORMAL
@@ -151,7 +151,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "SaluPro.Titulo.TLabel",
+        "ArchiNet.Titulo.TLabel",
         background=COLOR_FONDO,
         foreground=COLOR_TEXTO,
         font=FUENTE_TITULO
@@ -162,7 +162,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "SaluPro.Subtitulo.TLabel",
+        "ArchiNet.Subtitulo.TLabel",
         background=COLOR_FONDO,
         foreground=COLOR_GRIS_CLARO,
         font=FUENTE_SUBTITULO
@@ -173,7 +173,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "SaluPro.Seccion.TLabel",
+        "ArchiNet.Seccion.TLabel",
         background=COLOR_PANEL,
         foreground=COLOR_TEXTO,
         font=FUENTE_SECCION
@@ -184,7 +184,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "SaluPro.TEntry",
+        "ArchiNet.TEntry",
         font=FUENTE_NORMAL,
         fieldbackground=COLOR_PANEL_CLARO,
         foreground=COLOR_TEXTO,
@@ -198,7 +198,7 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "SaluPro.TCombobox",
+        "ArchiNet.TCombobox",
         font=FUENTE_NORMAL,
         fieldbackground=COLOR_PANEL_CLARO,
         background=COLOR_PANEL_CLARO,
@@ -212,13 +212,13 @@ def configurar_estilos():
     # -----------------------------------------------------
 
     estilo.configure(
-        "SaluPro.TNotebook",
+        "ArchiNet.TNotebook",
         background=COLOR_FONDO,
         borderwidth=0
     )
 
     estilo.configure(
-        "SaluPro.TNotebook.Tab",
+        "ArchiNet.TNotebook.Tab",
         font=FUENTE_NORMAL_BOLD,
         background=COLOR_PANEL,
         foreground=COLOR_GRIS_CLARO,
@@ -226,7 +226,7 @@ def configurar_estilos():
     )
 
     estilo.map(
-        "SaluPro.TNotebook.Tab",
+        "ArchiNet.TNotebook.Tab",
         background=[
             ("selected", COLOR_ROJO)
         ],
@@ -249,7 +249,7 @@ def crear_boton(
     grande=False
 ):
     """
-    Crea un botón con el estilo visual de SaluPro.
+    Crea un botón con el estilo visual de ArchiNet.
 
     Parámetros:
         parent   -> ventana o Frame donde aparecerá
@@ -365,7 +365,7 @@ def crear_panel(parent):
 
 def crear_titulo(
     parent,
-    texto="SALUPRO"
+    texto="ARCHINET"
 ):
     """
     Crea un título principal.
@@ -472,7 +472,7 @@ def crear_entry(
     ancho=30
 ):
     """
-    Crea un campo de texto con el estilo de SaluPro.
+    Crea un campo de texto con el estilo de ArchiNet.
     """
 
     entrada = tk.Entry(
@@ -540,7 +540,7 @@ def crear_texto(
 
 def crear_barra_superior(
     parent,
-    texto="SALUPRO"
+    texto="ARCHINET"
 ):
     """
     Crea una barra superior roja/oscura.
@@ -589,12 +589,12 @@ def crear_linea_roja(parent):
 
 
 # =========================================================
-# CONFIGURACIÓN INICIAL DE SALUPRO
+# CONFIGURACIÓN INICIAL DE ARCHINET
 # =========================================================
 
 def inicializar_estilos(ventana):
     """
-    Función general para iniciar los estilos de SaluPro.
+    Función general para iniciar los estilos de ArchiNet.
     """
 
     configurar_ventana(

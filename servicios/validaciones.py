@@ -1,4 +1,4 @@
-"""Validaciones y normalizaciones compartidas del dominio SaluPro."""
+"""Validaciones y normalizaciones compartidas del dominio ArchiNet."""
 
 import re
 import unicodedata

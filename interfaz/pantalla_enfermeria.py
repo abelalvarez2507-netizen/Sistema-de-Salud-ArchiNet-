@@ -96,7 +96,7 @@ class PantallaEnfermeria:
             self.sistema.cerrar()
             raise ValueError("La cuenta ya no está asignada a enfermería.")
         self.enfermero_actual = personal[0]
-        self.ventana.title("SaluPro - Portal de Enfermería")
+        self.ventana.title("ArchiNet - Portal de Enfermería")
         self.ventana.configure(bg=COLOR_FONDO)
         self.mostrar_inicio()
 
@@ -145,7 +145,7 @@ class PantallaEnfermeria:
         self._boton(barra, "Cerrar sesión", self.cerrar_sesion).pack(side="right")
         tk.Label(
             barra,
-            text="SALUPRO",
+            text="ARCHINET",
             font=FUENTE_LOGO,
             fg=COLOR_TEXTO,
             bg=COLOR_FONDO,

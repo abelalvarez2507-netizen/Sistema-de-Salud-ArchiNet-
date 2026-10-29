@@ -54,7 +54,7 @@ class PantallaInterna(tk.Frame):
     anterior en lugar de cerrar la aplicación.
     """
 
-    def __init__(self, master, volver_callback=None, titulo="SaluPro"):
+    def __init__(self, master, volver_callback=None, titulo="ArchiNet"):
         super().__init__(
             master,
             bg=COLOR_FONDO
@@ -168,7 +168,7 @@ class VentanaPrincipal:
         self._callback_volver_actual = None
 
         self.ventana.title(
-            "SaluPro - Sistema de Salud Rural"
+            "ArchiNet - Sistema de Salud Rural"
         )
 
         self.ventana.geometry(
@@ -323,7 +323,7 @@ class VentanaPrincipal:
     # =========================================================
 
     def crear_interfaz(self):
-        """Construye el panel administrativo principal de SaluPro."""
+        """Construye el panel administrativo principal de ArchiNet."""
 
         self.sistema.actualizar_citas_vencidas()
         instalar_navegacion(
@@ -471,7 +471,7 @@ class VentanaPrincipal:
 
         tk.Label(
             izquierda,
-            text="SALUPRO",
+            text="ARCHINET",
             font=FUENTE_LOGO,
             bg=COLOR_FONDO,
             fg=COLOR_TEXTO
@@ -1866,7 +1866,7 @@ class VentanaPrincipal:
         tk.Label(
             pie,
             text=(
-                "SaluPro • Sistema de Salud Rural • "
+                "ArchiNet • Sistema de Salud Rural • "
                 "Panel administrativo"
             ),
             font=FUENTE_PEQUENA,
@@ -2059,7 +2059,7 @@ class VentanaPrincipal:
 
     def _crear_pantalla_interna(
         self,
-        titulo="SaluPro"
+        titulo="ArchiNet"
     ):
         """Crea una pantalla dentro de la misma ventana principal."""
 
@@ -2583,7 +2583,7 @@ class VentanaPrincipal:
             "Reportes y estadísticas",
             (
                 "Consulte los principales indicadores "
-                "y reportes generados por SaluPro."
+                "y reportes generados por ArchiNet."
             ),
             [
                 (
@@ -5945,7 +5945,7 @@ class VentanaPrincipal:
 
         texto.insert(
             tk.END,
-            "             REPORTES SALUPRO\n"
+            "             REPORTES ARCHINET\n"
         )
 
         texto.insert(

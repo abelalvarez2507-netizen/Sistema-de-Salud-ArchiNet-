@@ -1,4 +1,4 @@
-"""Herramientas comunes de desplazamiento y navegación para SaluPro."""
+"""Herramientas comunes de desplazamiento y navegación para ArchiNet."""
 
 import time
 import tkinter as tk
@@ -74,9 +74,9 @@ def _pixeles_del_evento(canvas, evento):
     ahora = time.monotonic()
     if delta % 120 != 0:
         # Un mouse envía múltiplos de 120; un touchpad envía valores pequeños.
-        raiz._salupro_ultimo_touchpad = ahora
+        raiz._archinet_ultimo_touchpad = ahora
     es_touchpad = (
-        ahora - getattr(raiz, "_salupro_ultimo_touchpad", -10.0)
+        ahora - getattr(raiz, "_archinet_ultimo_touchpad", -10.0)
         < VENTANA_TOUCHPAD
     )
     if es_touchpad:
@@ -108,18 +108,18 @@ def desplazar_por_evento(canvas, evento):
 
     # Los movimientos pequeños del touchpad se acumulan hasta completar
     # una unidad, así no se pierde ningún gesto.
-    total = getattr(canvas, "_salupro_resto", 0.0) + pixeles / _paso_en_pixeles(
+    total = getattr(canvas, "_archinet_resto", 0.0) + pixeles / _paso_en_pixeles(
         canvas
     )
     unidades = int(total)
-    canvas._salupro_resto = total - unidades
+    canvas._archinet_resto = total - unidades
     if unidades == 0:
         return True
 
     antes = canvas.yview()
     canvas.yview_scroll(unidades, "units")
     if canvas.yview() == antes:
-        canvas._salupro_resto = 0.0
+        canvas._archinet_resto = 0.0
         return False
     return True
 
@@ -181,15 +181,15 @@ class VistaDesplazable(tk.Frame):
 def instalar_navegacion(ventana, volver=None, inicio=None):
     """Activa Alt+Izquierda para volver y Alt+Inicio para ir al inicio."""
 
-    if not getattr(ventana, "_salupro_navegacion_instalada", False):
-        ventana._salupro_navegacion_instalada = True
+    if not getattr(ventana, "_archinet_navegacion_instalada", False):
+        ventana._archinet_navegacion_instalada = True
 
         def volver_teclado(_evento=None):
             secundaria = _ventana_secundaria_activa(ventana)
             if secundaria is not None:
                 callback_secundario = getattr(
                     secundaria,
-                    "_salupro_volver",
+                    "_archinet_volver",
                     None,
                 )
                 if callable(callback_secundario):
@@ -197,7 +197,7 @@ def instalar_navegacion(ventana, volver=None, inicio=None):
                 else:
                     secundaria.destroy()
                 return "break"
-            callback = getattr(ventana, "_salupro_volver", None)
+            callback = getattr(ventana, "_archinet_volver", None)
             if callable(callback):
                 callback()
             return "break"
@@ -206,7 +206,7 @@ def instalar_navegacion(ventana, volver=None, inicio=None):
             secundaria = _ventana_secundaria_activa(ventana)
             if secundaria is not None:
                 secundaria.destroy()
-            callback = getattr(ventana, "_salupro_inicio", None)
+            callback = getattr(ventana, "_archinet_inicio", None)
             if callable(callback):
                 callback()
             return "break"
@@ -215,9 +215,9 @@ def instalar_navegacion(ventana, volver=None, inicio=None):
         ventana.bind_all("<Alt-Home>", inicio_teclado, add="+")
 
     if volver is not None:
-        ventana._salupro_volver = volver
+        ventana._archinet_volver = volver
     if inicio is not None:
-        ventana._salupro_inicio = inicio
+        ventana._archinet_inicio = inicio
 
 
 def _ventana_secundaria_activa(ventana):
@@ -232,10 +232,10 @@ def _ventana_secundaria_activa(ventana):
 
 
 def _registrar_vista(raiz, vista):
-    vistas = getattr(raiz, "_salupro_vistas_desplazables", None)
+    vistas = getattr(raiz, "_archinet_vistas_desplazables", None)
     if vistas is None:
         vistas = []
-        raiz._salupro_vistas_desplazables = vistas
+        raiz._archinet_vistas_desplazables = vistas
 
         def desplazar(evento):
             widget = getattr(evento, "widget", None)
@@ -263,7 +263,7 @@ def _registrar_vista(raiz, vista):
                     return "break"
             return None
 
-        raiz._salupro_manejador_rueda = desplazar
+        raiz._archinet_manejador_rueda = desplazar
         raiz.bind_all("<MouseWheel>", desplazar, add="+")
         raiz.bind_all("<Button-4>", desplazar, add="+")
         raiz.bind_all("<Button-5>", desplazar, add="+")
@@ -273,6 +273,6 @@ def _registrar_vista(raiz, vista):
 
 
 def _quitar_vista(raiz, vista):
-    vistas = getattr(raiz, "_salupro_vistas_desplazables", None)
+    vistas = getattr(raiz, "_archinet_vistas_desplazables", None)
     if vistas is not None and vista in vistas:
         vistas.remove(vista)

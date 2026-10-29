@@ -53,7 +53,7 @@ class PantallaProfesional:
         self._temporizador = None
         self._pantalla_en_edicion = False
         self._vista_actual = "agenda"
-        self.ventana.title("SaluPro - Portal del Profesional")
+        self.ventana.title("ArchiNet - Portal del Profesional")
         self.ventana.configure(bg=COLOR_FONDO)
         self.mostrar_agenda()
 
@@ -126,7 +126,7 @@ class PantallaProfesional:
         ).pack(side="left")
         tk.Label(
             barra,
-            text="SALUPRO",
+            text="ARCHINET",
             font=FUENTE_LOGO,
             fg=COLOR_TEXTO,
             bg=COLOR_FONDO,

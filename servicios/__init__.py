@@ -1,3 +1,3 @@
 """
-Paquete de interfaz gráfica de SistemaRural-PE.
+Paquete de interfaz gráfica de ArchiNet.
 """
