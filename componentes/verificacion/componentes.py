@@ -130,13 +130,13 @@ class VerificadorComponentesMixin:
             if self.rol == "paciente":
                 self._enlace(
                     "¿Eres nuevo?"
-                    "Crear cuenta",
+                    "\n Crear cuenta",
                     lambda: self._mostrar_modo("registro_nuevo"),
                 )
             elif self.rol != "administrativa":
                 self._enlace(
                     "¿Eres nuevo?"
-                    "Crear cuenta",
+                    "\n Crear cuenta",
                     lambda: self._mostrar_modo("registro_personal_nuevo"),
                 )
             password.bind("<Return>", lambda _evento: self._iniciar_sesion())

@@ -146,7 +146,7 @@ class ServicioAutenticacion:
                 str(codigo_medico or "").strip().casefold()
                 != self.CODIGO_MEDICO_REGISTRO.casefold()
             ):
-                raise ValueError("El código médico secreto no es válido.")
+                raise ValueError("El código de autentificacion no es correcto")
         usuario = self.validar_usuario(usuario)
         password = self.validar_password(password)
         codigo = str(codigo or "").strip()
@@ -209,7 +209,7 @@ class ServicioAutenticacion:
             str(codigo_medico or "").strip().casefold()
             != self.CODIGO_MEDICO_REGISTRO.casefold()
         ):
-            raise ValueError("El código médico secreto no es válido.")
+            raise ValueError("El código de autentificacion no es valida")
 
         nombre = validar_nombre(nombre)
         dni = validar_dni(dni)
