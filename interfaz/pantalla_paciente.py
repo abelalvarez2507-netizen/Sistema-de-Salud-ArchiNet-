@@ -23,7 +23,6 @@ from interfaz.estilos import (
     FUENTE_TITULO,
     FUENTE_SUBTITULO,
     FUENTE_SECCION,
-    FUENTE_NORMAL,
     FUENTE_BOTON
 )
 from interfaz.navegacion import VistaDesplazable, instalar_navegacion
@@ -298,7 +297,7 @@ class PantallaPaciente:
         tarjeta_reservar = self.crear_tarjeta(
             panel_opciones,
             "Citas",
-            "Elige cómo deseas reservar tu atención",
+            "",
             self.mostrar_opciones_cita
         )
 
@@ -718,21 +717,13 @@ class PantallaPaciente:
             bg=COLOR_FONDO,
         ).pack(pady=(0, 12))
 
-        tk.Label(
-            pantalla,
-            text="Selecciona el tipo de cita que deseas solicitar.",
-            font=FUENTE_NORMAL,
-            fg=COLOR_TEXTO,
-            bg=COLOR_FONDO,
-        ).pack(pady=(0, 14))
-
         opciones = tk.Frame(pantalla, bg=COLOR_FONDO)
         opciones.pack(pady=8)
 
         tarjeta_directa = self.crear_tarjeta(
             opciones,
             "Cita directa",
-            "Reserva el primer horario disponible.",
+            "",
             self.solicitar_cita_directa,
         )
         tarjeta_directa.grid(row=0, column=0, padx=15, pady=10)
@@ -740,7 +731,7 @@ class PantallaPaciente:
         tarjeta_regular = self.crear_tarjeta(
             opciones,
             "Cita regular",
-            "Elige la fecha y el horario, como en el formulario actual.",
+            "",
             self.solicitar_cita,
         )
         tarjeta_regular.grid(row=0, column=1, padx=15, pady=10)
@@ -799,10 +790,7 @@ class PantallaPaciente:
 
         etiqueta_horario = tk.Label(
             formulario,
-            text=(
-                "Se reservará el primer horario disponible: "
-                f"{siguiente_horario[0]} a las {siguiente_horario[1]}."
-            ),
+            text=f"Horario asignado: {siguiente_horario[0]} · {siguiente_horario[1]}",
             font=FUENTE_BOTON,
             bg=COLOR_PANEL,
             fg=COLOR_TEXTO,
@@ -841,14 +829,13 @@ class PantallaPaciente:
                 siguiente_horario[1] = horario_actualizado[1]
                 etiqueta_horario.configure(
                     text=(
-                        "El horario cambió. El primer horario disponible ahora es: "
-                        f"{siguiente_horario[0]} a las {siguiente_horario[1]}. "
-                        "Revísalo y confirma nuevamente."
+                        f"Horario actualizado: {siguiente_horario[0]} · "
+                        f"{siguiente_horario[1]}. Confirma nuevamente."
                     )
                 )
                 messagebox.showinfo(
                     "Horario actualizado",
-                    "El primer horario disponible cambió. Revisa el nuevo horario antes de confirmar.",
+                    "El horario cambió. Revisa el dato actualizado y confirma nuevamente.",
                 )
                 return
 

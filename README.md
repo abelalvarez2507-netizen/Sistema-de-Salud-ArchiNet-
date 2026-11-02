@@ -111,8 +111,15 @@ SistemaRural-PE/
 │   ├── pantalla_profesional.py
 │   ├── pantalla_enfermeria.py
 │   ├── pantalla_administrativa.py
-│   ├── navegacion.py
-│   └── estilos.py
+│   ├── campos/
+│   │   └── fecha.py
+│   ├── estilos/
+│   │   ├── paleta.py
+│   │   ├── ventana.py
+│   │   └── widgets.py
+│   └── navegacion/
+│       ├── atajos.py
+│       └── desplazamiento.py
 ├── componentes/
 │   └── modal_verificador.py
 ├── modelos/
@@ -130,13 +137,16 @@ SistemaRural-PE/
 │   ├── gestor_bd.py
 │   ├── fabrica.py
 │   ├── contratos.py
-│   ├── seguridad.py
 │   ├── autenticacion.py
 │   ├── validaciones.py
-│   └── reportes.py
+│   ├── reportes.py
+│   └── seguridad/
+│       ├── constantes.py
+│       └── seguridad.py
 ├── pruebas/
 │   ├── test_sistema.py
-│   └── test_patrones.py
+│   ├── test_patrones.py
+│   └── test_desplazamiento.py
 ├── datos/                  (salud.db se crea al ejecutar)
 ├── imagenes/
 │   └── icono_inicio.png
