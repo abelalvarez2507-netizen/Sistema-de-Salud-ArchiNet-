@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from modelos.cita import Cita
 from servicios.sistema_salud import SistemaSalud
@@ -23,6 +23,7 @@ from interfaz.estilos import (
     FUENTE_TITULO,
     FUENTE_SUBTITULO,
     FUENTE_SECCION,
+    FUENTE_NORMAL,
     FUENTE_BOTON
 )
 from interfaz.navegacion import VistaDesplazable, instalar_navegacion
@@ -296,9 +297,9 @@ class PantallaPaciente:
 
         tarjeta_reservar = self.crear_tarjeta(
             panel_opciones,
-            "Solicitar una cita",
-            "",
-            self.solicitar_cita
+            "Citas",
+            "Elige cómo deseas reservar tu atención",
+            self.mostrar_opciones_cita
         )
 
         tarjeta_reservar.grid(
@@ -326,7 +327,7 @@ class PantallaPaciente:
 
         self.pantalla_actual = None
 
-    def _crear_pantalla_interna(self, titulo):
+    def _crear_pantalla_interna(self, titulo, volver=None):
         """
         Crea una pantalla interna dentro del mismo Tk.
         No abre una ventana nueva.
@@ -342,9 +343,10 @@ class PantallaPaciente:
 
         self.pantalla_actual = vista
         self._pantalla_titulo = titulo
+        volver = volver or self.crear_interfaz
         instalar_navegacion(
             self.ventana,
-            volver=self.crear_interfaz,
+            volver=volver,
             inicio=self.volver_a_inicio,
         )
 
@@ -372,7 +374,7 @@ class PantallaPaciente:
             cursor="hand2",
             padx=15,
             pady=8,
-            command=self.crear_interfaz
+            command=volver
         )
 
         boton_volver.pack(
@@ -703,6 +705,185 @@ class PantallaPaciente:
     # SOLICITAR CITA
     # =========================================================
 
+    def mostrar_opciones_cita(self):
+        if not self.paciente_autenticado():
+            return
+
+        pantalla = self._crear_pantalla_interna("Citas")
+        tk.Label(
+            pantalla,
+            text=f"Paciente: {self.paciente_actual.nombre}",
+            font=FUENTE_SUBTITULO,
+            fg=COLOR_GRIS_CLARO,
+            bg=COLOR_FONDO,
+        ).pack(pady=(0, 12))
+
+        tk.Label(
+            pantalla,
+            text="Selecciona el tipo de cita que deseas solicitar.",
+            font=FUENTE_NORMAL,
+            fg=COLOR_TEXTO,
+            bg=COLOR_FONDO,
+        ).pack(pady=(0, 14))
+
+        opciones = tk.Frame(pantalla, bg=COLOR_FONDO)
+        opciones.pack(pady=8)
+
+        tarjeta_directa = self.crear_tarjeta(
+            opciones,
+            "Cita directa",
+            "Reserva el primer horario disponible.",
+            self.solicitar_cita_directa,
+        )
+        tarjeta_directa.grid(row=0, column=0, padx=15, pady=10)
+
+        tarjeta_regular = self.crear_tarjeta(
+            opciones,
+            "Cita regular",
+            "Elige la fecha y el horario, como en el formulario actual.",
+            self.solicitar_cita,
+        )
+        tarjeta_regular.grid(row=0, column=1, padx=15, pady=10)
+
+    def _buscar_siguiente_horario_cita(self):
+        fecha_base = datetime.now().date()
+        for dias_adelante in range(366):
+            fecha = (fecha_base + timedelta(days=dias_adelante)).strftime("%d/%m/%Y")
+            horarios = self.sistema.horarios_disponibles_para_cita(
+                fecha,
+                paciente_codigo=self.paciente_actual.codigo,
+            )
+            if horarios:
+                return fecha, horarios[0]
+        return None
+
+    def solicitar_cita_directa(self):
+        if not self.paciente_autenticado():
+            return
+
+        medicos = [
+            profesional
+            for profesional in self.sistema.obtener_personal()
+            if "enfermer" not in profesional.especialidad.casefold()
+        ]
+        if not medicos:
+            messagebox.showwarning(
+                "Sin profesionales",
+                "Todavía no hay médicos registrados para reservar una cita.",
+            )
+            return
+
+        siguiente_horario = self._buscar_siguiente_horario_cita()
+        if not siguiente_horario:
+            messagebox.showwarning(
+                "Sin horarios disponibles",
+                "No se encontraron horarios disponibles durante los próximos 12 meses.",
+            )
+            return
+        siguiente_horario = list(siguiente_horario)
+
+        pantalla = self._crear_pantalla_interna(
+            "Cita directa",
+            volver=self.mostrar_opciones_cita,
+        )
+        tk.Label(
+            pantalla,
+            text=f"Paciente: {self.paciente_actual.nombre}",
+            font=FUENTE_SUBTITULO,
+            fg=COLOR_GRIS_CLARO,
+            bg=COLOR_FONDO,
+        ).pack(pady=(0, 12))
+
+        formulario = tk.Frame(pantalla, bg=COLOR_PANEL, padx=24, pady=18)
+        formulario.pack(fill="x", padx=60, pady=10)
+
+        etiqueta_horario = tk.Label(
+            formulario,
+            text=(
+                "Se reservará el primer horario disponible: "
+                f"{siguiente_horario[0]} a las {siguiente_horario[1]}."
+            ),
+            font=FUENTE_BOTON,
+            bg=COLOR_PANEL,
+            fg=COLOR_TEXTO,
+            wraplength=600,
+            justify="left",
+        )
+        etiqueta_horario.pack(anchor="w", pady=(0, 14))
+
+        tk.Label(
+            formulario,
+            text="Motivo de la cita:",
+            bg=COLOR_PANEL,
+            fg=COLOR_TEXTO,
+        ).pack(anchor="w")
+        entrada_motivo = tk.Entry(
+            formulario,
+            width=55,
+            bg=COLOR_PANEL_CLARO,
+            fg=COLOR_TEXTO,
+            insertbackground=COLOR_TEXTO,
+            relief="flat",
+        )
+        entrada_motivo.pack(anchor="w", pady=(4, 8), ipady=6)
+
+        def guardar():
+            horario_actualizado = self._buscar_siguiente_horario_cita()
+            if not horario_actualizado:
+                messagebox.showwarning(
+                    "Sin horarios disponibles",
+                    "Ya no hay horarios disponibles para reservar una cita directa.",
+                )
+                return
+
+            if horario_actualizado != siguiente_horario:
+                siguiente_horario[0] = horario_actualizado[0]
+                siguiente_horario[1] = horario_actualizado[1]
+                etiqueta_horario.configure(
+                    text=(
+                        "El horario cambió. El primer horario disponible ahora es: "
+                        f"{siguiente_horario[0]} a las {siguiente_horario[1]}. "
+                        "Revísalo y confirma nuevamente."
+                    )
+                )
+                messagebox.showinfo(
+                    "Horario actualizado",
+                    "El primer horario disponible cambió. Revisa el nuevo horario antes de confirmar.",
+                )
+                return
+
+            try:
+                cita = self.sistema.crear_cita_asignacion_automatica(
+                    self.paciente_actual,
+                    siguiente_horario[0],
+                    entrada_motivo.get(),
+                    siguiente_horario[1],
+                )
+            except ValueError as error:
+                messagebox.showerror("No se pudo registrar la cita", str(error))
+                return
+
+            messagebox.showinfo(
+                "Cita directa solicitada",
+                f"Tu cita quedó registrada para el {cita.fecha} a las {cita.hora} "
+                f"con {cita.profesional.nombre} ({cita.profesional.especialidad}).",
+            )
+            self.crear_interfaz()
+
+        tk.Button(
+            formulario,
+            text="Confirmar cita directa",
+            command=guardar,
+            font=FUENTE_BOTON,
+            bg=COLOR_ROJO,
+            fg=COLOR_BLANCO,
+            activebackground=COLOR_ROJO_CLARO,
+            relief="flat",
+            cursor="hand2",
+            padx=16,
+            pady=8,
+        ).pack(anchor="w", pady=(8, 0))
+
     def solicitar_cita(self):
         if not self.paciente_autenticado():
             return
@@ -719,7 +900,10 @@ class PantallaPaciente:
             )
             return
 
-        pantalla = self._crear_pantalla_interna("Solicitar una cita")
+        pantalla = self._crear_pantalla_interna(
+            "Cita regular",
+            volver=self.mostrar_opciones_cita,
+        )
         tk.Label(
             pantalla,
             text=f"Paciente: {self.paciente_actual.nombre}",
