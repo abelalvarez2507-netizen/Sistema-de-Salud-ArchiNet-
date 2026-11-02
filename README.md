@@ -176,9 +176,10 @@ correspondiente.
   nuevo** abre directamente un único formulario para registro y acceso. El
   paciente valida su código y DNI. Profesional y enfermería pueden vincularse a
   un registro existente mediante el DNI o crear uno nuevo; su código de personal
-  se genera automáticamente. Se solicita el código médico secreto compartido
-  `saludpro2026`. Los campos de DNI aceptan exactamente 8
-  dígitos y los nombres solo letras, tildes, ñ y espacios. Todas las altas nuevas
+  se genera automáticamente. Se solicita el código de autorización compartido
+  `ArchiNet2026`, respetando exactamente las mayúsculas y minúsculas. Los campos
+  de DNI aceptan exactamente 8 dígitos y los nombres solo letras, tildes, ñ y
+  espacios. Todas las altas nuevas
   solicitan aceptar los términos y condiciones; el inicio de sesión de cuentas
   existentes no.
 - El rol de enfermería solo se asigna a registros con especialidad de

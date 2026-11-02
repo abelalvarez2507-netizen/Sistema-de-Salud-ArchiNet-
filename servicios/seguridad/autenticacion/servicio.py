@@ -9,6 +9,9 @@ import unicodedata
 
 from servicios.persistencia.repositorio import RepositorioSalud
 from servicios.seguridad.seguridad import SeguridadDatos
+from servicios.seguridad.constantes import (
+    CODIGO_MEDICO_REGISTRO as _CODIGO_MEDICO_REGISTRO,
+)
 from servicios.seguridad.almacen_privado import DatosPrivadosUsuario
 from servicios.validacion import (
     validar_dni,
@@ -35,11 +38,12 @@ from servicios.seguridad.modulos_autenticacion.credenciales import Autenticacion
 from servicios.seguridad.modulos_autenticacion.registro import AutenticacionRegistroMixin
 
 class ServicioAutenticacion(AutenticacionCredencialesMixin, AutenticacionRegistroMixin):
+    # Roles permitidos y parámetros para proteger las contraseñas.
     ROLES = {"paciente", "administrativa", "profesional", "enfermeria"}
     ITERACIONES_PASSWORD = 310_000
     LONGITUD_SAL = 16
     LONGITUD_HASH = 32
-    CODIGO_MEDICO_REGISTRO = "saludpro2026"
+    CODIGO_MEDICO_REGISTRO = _CODIGO_MEDICO_REGISTRO
 
     def __init__(self, repositorio=None):
         self.repositorio = repositorio or RepositorioSalud()

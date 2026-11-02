@@ -9,6 +9,9 @@ import unicodedata
 
 from servicios.repositorio import RepositorioSalud
 from servicios.seguridad import SeguridadDatos
+from servicios.seguridad.constantes import (
+    CODIGO_MEDICO_REGISTRO as _CODIGO_MEDICO_REGISTRO,
+)
 from servicios.validaciones import (
     validar_dni,
     validar_edad,
@@ -30,11 +33,12 @@ class SesionUsuario:
 
 
 class ServicioAutenticacion:
+    # Roles permitidos y parámetros para proteger las contraseñas.
     ROLES = {"paciente", "administrativa", "profesional", "enfermeria"}
     ITERACIONES_PASSWORD = 310_000
     LONGITUD_SAL = 16
     LONGITUD_HASH = 32
-    CODIGO_MEDICO_REGISTRO = "saludpro2026"
+    CODIGO_MEDICO_REGISTRO = _CODIGO_MEDICO_REGISTRO
 
     def __init__(self, repositorio=None):
         self.repositorio = repositorio or RepositorioSalud()
@@ -142,11 +146,9 @@ class ServicioAutenticacion:
         if rol not in {"paciente", "profesional", "enfermeria"}:
             raise ValueError("Este rol no admite el registro desde el acceso.")
         if rol in {"profesional", "enfermeria"}:
-            if (
-                str(codigo_medico or "").strip().casefold()
-                != self.CODIGO_MEDICO_REGISTRO.casefold()
-            ):
-                raise ValueError("El código de autentificacion no es correcto")
+            # El personal debe ingresar el código exactamente como fue definido.
+            if codigo_medico != self.CODIGO_MEDICO_REGISTRO:
+                raise ValueError("El código de autorización no es correcto.")
         usuario = self.validar_usuario(usuario)
         password = self.validar_password(password)
         codigo = str(codigo or "").strip()
@@ -205,11 +207,9 @@ class ServicioAutenticacion:
             )
         if rol not in {"profesional", "enfermeria"}:
             raise ValueError("Este registro solo está disponible para personal de salud.")
-        if (
-            str(codigo_medico or "").strip().casefold()
-            != self.CODIGO_MEDICO_REGISTRO.casefold()
-        ):
-            raise ValueError("El código de autentificacion no es valida")
+        # Se valida antes de crear el registro o la cuenta del personal nuevo.
+        if codigo_medico != self.CODIGO_MEDICO_REGISTRO:
+            raise ValueError("El código de autorización no es correcto.")
 
         nombre = validar_nombre(nombre)
         dni = validar_dni(dni)
