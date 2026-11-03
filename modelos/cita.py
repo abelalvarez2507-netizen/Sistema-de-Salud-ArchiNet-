@@ -9,6 +9,8 @@ from servicios.validaciones import (
     validar_motivo,
 )
 
+_FECHA_GENERACION_AHORA = object()
+
 
 class Cita:
     """Representa una cita entre un paciente y un profesional."""
@@ -31,6 +33,7 @@ class Cita:
         motivo,
         estado="Pendiente",
         hora="09:00",
+        fecha_generacion=_FECHA_GENERACION_AHORA,
     ):
         if paciente is None or not isinstance(paciente, Paciente):
             raise ValueError("La cita debe tener un paciente válido.")
@@ -44,6 +47,10 @@ class Cita:
         self.hora = hora
         self.motivo = motivo
         self.estado = estado
+        if fecha_generacion is _FECHA_GENERACION_AHORA:
+            self._fecha_generacion = datetime.now()
+        else:
+            self.fecha_generacion = fecha_generacion
 
     @property
     def codigo(self):
@@ -79,6 +86,30 @@ class Cita:
             f"{self.fecha} {self.hora}",
             "%d/%m/%Y %H:%M",
         )
+
+    @property
+    def fecha_generacion(self):
+        return self._fecha_generacion
+
+    @fecha_generacion.setter
+    def fecha_generacion(self, valor):
+        if valor is None or isinstance(valor, datetime):
+            self._fecha_generacion = valor
+            return
+
+        texto = str(valor).strip()
+        try:
+            self._fecha_generacion = datetime.fromisoformat(texto)
+        except ValueError:
+            try:
+                self._fecha_generacion = datetime.strptime(
+                    texto,
+                    "%d/%m/%Y %H:%M:%S",
+                )
+            except ValueError as error:
+                raise ValueError(
+                    "La fecha de generación de la cita no es válida."
+                ) from error
 
     @property
     def motivo(self):

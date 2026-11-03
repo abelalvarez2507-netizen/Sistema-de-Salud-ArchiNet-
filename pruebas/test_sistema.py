@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import tempfile
 from datetime import date, timedelta
 
@@ -160,6 +161,70 @@ def test_registro_de_cita_con_entidades_existentes():
         assert len(sistema.obtener_citas()) == 1
         assert sistema.obtener_citas()[0].estado == "Pendiente"
 
+        repositorio.cerrar()
+
+
+def test_fecha_generacion_de_cita_se_guarda_y_se_recupera():
+    with tempfile.TemporaryDirectory() as carpeta:
+        sistema, repositorio = crear_sistema_temporal(carpeta)
+        paciente = crear_paciente()
+        profesional = crear_profesional()
+        sistema.registrar_paciente(paciente)
+        sistema.registrar_personal(profesional)
+
+        cita = Cita(
+            "C001",
+            paciente,
+            profesional,
+            fecha_futura(),
+            "Tos seca, fiebre",
+        )
+        fecha_generacion = cita.fecha_generacion
+        sistema.registrar_cita(cita)
+        repositorio.cerrar()
+
+        sistema_recargado, repositorio_recargado = crear_sistema_temporal(carpeta)
+        cita_recargada = sistema_recargado.obtener_citas()[0]
+
+        assert cita_recargada.fecha_generacion == fecha_generacion
+        assert cita_recargada.fecha == cita.fecha
+        assert cita_recargada.hora == cita.hora
+        repositorio_recargado.cerrar()
+
+
+def test_migracion_agrega_fecha_generacion_sin_reemplazar_citas_anteriores():
+    with tempfile.TemporaryDirectory() as carpeta:
+        ruta = os.path.join(carpeta, "salud_antigua.db")
+        conexion = sqlite3.connect(ruta)
+        conexion.execute(
+            """
+            CREATE TABLE citas (
+                codigo TEXT PRIMARY KEY,
+                paciente_codigo TEXT NOT NULL,
+                profesional_codigo TEXT NOT NULL,
+                fecha TEXT NOT NULL,
+                motivo TEXT NOT NULL,
+                estado TEXT NOT NULL
+            )
+            """
+        )
+        conexion.execute(
+            """
+            INSERT INTO citas
+                (codigo, paciente_codigo, profesional_codigo, fecha, motivo, estado)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            ("C001", "P001", "PS001", "10/12/2026", "Fiebre", "Pendiente"),
+        )
+        conexion.commit()
+        conexion.close()
+
+        repositorio = RepositorioSalud(ruta)
+        cita_guardada = repositorio.obtener_citas()[0]
+
+        assert len(cita_guardada) == 8
+        assert cita_guardada[3] == "10/12/2026"
+        assert cita_guardada[-1] is None
         repositorio.cerrar()
 
 

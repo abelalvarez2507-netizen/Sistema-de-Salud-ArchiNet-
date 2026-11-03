@@ -71,7 +71,8 @@ class RepositorioSalud:
                 fecha TEXT NOT NULL,
                 hora TEXT NOT NULL DEFAULT '09:00',
                 motivo TEXT NOT NULL,
-                estado TEXT NOT NULL
+                estado TEXT NOT NULL,
+                fecha_generacion TEXT
             )
             """
         )
@@ -291,6 +292,11 @@ class RepositorioSalud:
         if "hora" not in columnas_citas:
             cursor.execute(
                 "ALTER TABLE citas ADD COLUMN hora TEXT NOT NULL DEFAULT '09:00'"
+            )
+
+        if "fecha_generacion" not in columnas_citas:
+            cursor.execute(
+                "ALTER TABLE citas ADD COLUMN fecha_generacion TEXT"
             )
 
         columnas_atenciones = [
@@ -790,9 +796,10 @@ class RepositorioSalud:
                         fecha,
                         hora,
                         motivo,
-                        estado
+                        estado,
+                        fecha_generacion
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         cita.codigo,
@@ -801,7 +808,12 @@ class RepositorioSalud:
                         cita.fecha,
                         cita.hora,
                         cita.motivo,
-                        cita.estado
+                        cita.estado,
+                        (
+                            cita.fecha_generacion.strftime("%Y-%m-%d %H:%M:%S.%f")
+                            if cita.fecha_generacion
+                            else None
+                        ),
                     )
                 )
 
@@ -824,7 +836,8 @@ class RepositorioSalud:
                 fecha,
                 hora,
                 motivo,
-                estado
+                estado,
+                fecha_generacion
             FROM citas
             ORDER BY codigo
             """

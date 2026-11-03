@@ -4,6 +4,8 @@ from modelos.personal_enfermeria import PersonalEnfermeria
 from modelos.cita import Cita
 from modelos.atencion_medica import AtencionMedica
 
+_FECHA_GENERACION_NO_ESPECIFICADA = object()
+
 
 class FabricaEntidades:
     """
@@ -94,7 +96,18 @@ class FabricaEntidades:
         motivo,
         estado="Pendiente",
         hora="09:00",
+        fecha_generacion=_FECHA_GENERACION_NO_ESPECIFICADA,
     ):
+        if fecha_generacion is _FECHA_GENERACION_NO_ESPECIFICADA:
+            return Cita(
+                codigo,
+                paciente,
+                profesional,
+                fecha,
+                motivo,
+                estado,
+                hora,
+            )
         return Cita(
             codigo,
             paciente,
@@ -103,6 +116,7 @@ class FabricaEntidades:
             motivo,
             estado,
             hora,
+            fecha_generacion,
         )
 
     @staticmethod

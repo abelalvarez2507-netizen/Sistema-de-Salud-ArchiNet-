@@ -42,6 +42,8 @@ Tkinter para la interfaz gráfica y SQLite para guardar la información.
   disponible. El profesional asignado se muestra al confirmar la cita.
 - El motivo de una cita puede incluir varios síntomas de la lista o un síntoma
   personalizado.
+- Cita directa y Cita regular usan los mismos campos para elegir fecha y hora.
+  La fecha y hora de generación se guarda aparte de la fecha y hora de atención.
 - Al guardar el diagnóstico, los médicos generales deben seleccionar al especialista
   que recibirá la derivación. El paciente aparece en la agenda del profesional
   receptor y el informe remitente se conserva en el historial clínico.

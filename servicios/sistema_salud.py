@@ -137,6 +137,18 @@ class SistemaSalud:
                     estado,
                 ) = fila
                 hora = "09:00"
+                fecha_generacion = None
+            elif len(fila) == 7:
+                (
+                    codigo,
+                    paciente_codigo,
+                    profesional_codigo,
+                    fecha,
+                    hora,
+                    motivo,
+                    estado,
+                ) = fila
+                fecha_generacion = None
             else:
                 (
                     codigo,
@@ -146,6 +158,7 @@ class SistemaSalud:
                     hora,
                     motivo,
                     estado,
+                    fecha_generacion,
                 ) = fila
 
             paciente = next(
@@ -191,6 +204,7 @@ class SistemaSalud:
                     motivo,
                     estado,
                     hora,
+                    fecha_generacion,
                 )
             )
 

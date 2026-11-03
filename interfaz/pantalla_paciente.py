@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from modelos.cita import Cita
 from servicios.sistema_salud import SistemaSalud
@@ -760,18 +760,6 @@ class PantallaPaciente:
         )
         tarjeta_regular.grid(row=0, column=1, padx=15, pady=10)
 
-    def _buscar_siguiente_horario_cita(self):
-        fecha_base = datetime.now().date()
-        for dias_adelante in range(366):
-            fecha = (fecha_base + timedelta(days=dias_adelante)).strftime("%d/%m/%Y")
-            horarios = self.sistema.horarios_disponibles_para_cita(
-                fecha,
-                paciente_codigo=self.paciente_actual.codigo,
-            )
-            if horarios:
-                return fecha, horarios[0]
-        return None
-
     def _crear_selector_sintomas(self, formulario):
         tk.Label(
             formulario,
@@ -843,124 +831,12 @@ class PantallaPaciente:
         return ", ".join(sintomas)
 
     def solicitar_cita_directa(self):
-        if not self.paciente_autenticado():
-            return
-
-        medicos = [
-            profesional
-            for profesional in self.sistema.obtener_personal()
-            if "enfermer" not in profesional.especialidad.casefold()
-        ]
-        if not medicos:
-            messagebox.showwarning(
-                "Sin profesionales",
-                "Todavía no hay médicos registrados para reservar una cita.",
-            )
-            return
-
-        siguiente_horario = self._buscar_siguiente_horario_cita()
-        if not siguiente_horario:
-            messagebox.showwarning(
-                "Sin horarios disponibles",
-                "No se encontraron horarios disponibles durante los próximos 12 meses.",
-            )
-            return
-        siguiente_horario = list(siguiente_horario)
-
-        pantalla = self._crear_pantalla_interna(
-            "Cita directa",
-            volver=self.mostrar_opciones_cita,
-        )
-        tk.Label(
-            pantalla,
-            text=f"Paciente: {self.paciente_actual.nombre}",
-            font=FUENTE_SUBTITULO,
-            fg=COLOR_GRIS_CLARO,
-            bg=COLOR_FONDO,
-        ).pack(pady=(0, 12))
-
-        formulario = tk.Frame(pantalla, bg=COLOR_PANEL, padx=24, pady=18)
-        formulario.pack(fill="x", padx=60, pady=10)
-
-        etiqueta_horario = tk.Label(
-            formulario,
-            text=f"Horario asignado: {siguiente_horario[0]} · {siguiente_horario[1]}",
-            font=FUENTE_BOTON,
-            bg=COLOR_PANEL,
-            fg=COLOR_TEXTO,
-            wraplength=600,
-            justify="left",
-        )
-        etiqueta_horario.pack(anchor="w", pady=(0, 14))
-
-        selecciones_sintomas, entrada_otro = self._crear_selector_sintomas(formulario)
-
-        def guardar():
-            try:
-                motivo = self._obtener_motivo_sintomas(
-                    selecciones_sintomas,
-                    entrada_otro,
-                )
-            except ValueError as error:
-                messagebox.showwarning("Motivo de la cita", str(error))
-                return
-
-            horario_actualizado = self._buscar_siguiente_horario_cita()
-            if not horario_actualizado:
-                messagebox.showwarning(
-                    "Sin horarios disponibles",
-                    "Ya no hay horarios disponibles para reservar una cita directa.",
-                )
-                return
-
-            if horario_actualizado != siguiente_horario:
-                siguiente_horario[0] = horario_actualizado[0]
-                siguiente_horario[1] = horario_actualizado[1]
-                etiqueta_horario.configure(
-                    text=(
-                        f"Horario actualizado: {siguiente_horario[0]} · "
-                        f"{siguiente_horario[1]}. Confirma nuevamente."
-                    )
-                )
-                messagebox.showinfo(
-                    "Horario actualizado",
-                    "El horario cambió. Revisa el dato actualizado y confirma nuevamente.",
-                )
-                return
-
-            try:
-                cita = self.sistema.crear_cita_asignacion_automatica(
-                    self.paciente_actual,
-                    siguiente_horario[0],
-                    motivo,
-                    siguiente_horario[1],
-                )
-            except ValueError as error:
-                messagebox.showerror("No se pudo registrar la cita", str(error))
-                return
-
-            messagebox.showinfo(
-                "Cita directa solicitada",
-                f"Tu cita quedó registrada para el {cita.fecha} a las {cita.hora} "
-                f"con {cita.profesional.nombre} ({cita.profesional.especialidad}).",
-            )
-            self.crear_interfaz()
-
-        tk.Button(
-            formulario,
-            text="Confirmar cita directa",
-            command=guardar,
-            font=FUENTE_BOTON,
-            bg=COLOR_ROJO,
-            fg=COLOR_BLANCO,
-            activebackground=COLOR_ROJO_CLARO,
-            relief="flat",
-            cursor="hand2",
-            padx=16,
-            pady=8,
-        ).pack(anchor="w", pady=(8, 0))
+        self._mostrar_formulario_cita(directa=True)
 
     def solicitar_cita(self):
+        self._mostrar_formulario_cita(directa=False)
+
+    def _mostrar_formulario_cita(self, directa):
         if not self.paciente_autenticado():
             return
 
@@ -977,16 +853,43 @@ class PantallaPaciente:
             return
 
         pantalla = self._crear_pantalla_interna(
-            "Cita regular",
+            "Cita directa" if directa else "Cita regular",
             volver=self.mostrar_opciones_cita,
         )
+        encabezado_cita = tk.Frame(pantalla, bg=COLOR_FONDO)
+        encabezado_cita.pack(fill="x", padx=60, pady=(0, 12))
         tk.Label(
-            pantalla,
+            encabezado_cita,
             text=f"Paciente: {self.paciente_actual.nombre}",
             font=FUENTE_SUBTITULO,
             fg=COLOR_GRIS_CLARO,
             bg=COLOR_FONDO,
-        ).pack(pady=(0, 12))
+        ).pack()
+
+        etiqueta_generacion = tk.Label(
+            encabezado_cita,
+            text="",
+            font=("Arial", 9, "bold"),
+            fg=COLOR_ROJO,
+            bg=COLOR_FONDO,
+            anchor="e",
+        )
+        etiqueta_generacion.place(relx=1, rely=0.5, anchor="e")
+
+        def actualizar_reloj_generacion():
+            try:
+                ahora = datetime.now()
+                etiqueta_generacion.configure(
+                    text=(
+                        "Fecha y hora de generación de cita: "
+                        f"{ahora.strftime('%d/%m/%Y %H:%M:%S')}"
+                    )
+                )
+                etiqueta_generacion.after(1000, actualizar_reloj_generacion)
+            except tk.TclError:
+                return
+
+        actualizar_reloj_generacion()
 
         formulario = tk.Frame(pantalla, bg=COLOR_PANEL, padx=24, pady=18)
         formulario.pack(fill="x", padx=60, pady=10)
@@ -1011,6 +914,8 @@ class PantallaPaciente:
         )
         entrada_fecha.pack(anchor="w", pady=(4, 12), ipady=6)
         configurar_mascara_fecha(entrada_fecha)
+        # Ambas modalidades comienzan sin una fecha seleccionada.
+        entrada_fecha.delete(0, tk.END)
 
         tk.Label(
             formulario,
@@ -1093,7 +998,13 @@ class PantallaPaciente:
                 )
                 messagebox.showinfo(
                     "Cita solicitada",
-                    f"Tu cita quedó registrada para el {cita.fecha} a las {cita.hora} con {cita.profesional.nombre} ({cita.profesional.especialidad}).",
+                    (
+                        "Tu cita se generó el "
+                        f"{cita.fecha_generacion.strftime('%d/%m/%Y %H:%M:%S')} "
+                        f"y quedó agendada para el {cita.fecha} a las {cita.hora}.\n"
+                        f"Profesional: {cita.profesional.nombre} "
+                        f"({cita.profesional.especialidad})."
+                    ),
                 )
                 self.crear_interfaz()
             except ValueError as error:
@@ -1207,6 +1118,17 @@ class PantallaPaciente:
                 texto.insert(
                     tk.END,
                     f"Fecha y hora: {cita.fecha} · {cita.hora}\n"
+                )
+
+                texto.insert(
+                    tk.END,
+                    "Generada: "
+                    + (
+                        cita.fecha_generacion.strftime("%d/%m/%Y %H:%M:%S")
+                        if cita.fecha_generacion
+                        else "No registrada"
+                    )
+                    + "\n",
                 )
 
                 texto.insert(
