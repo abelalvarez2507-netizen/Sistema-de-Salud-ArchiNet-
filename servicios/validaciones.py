@@ -116,7 +116,7 @@ def validar_especialidad(valor):
 
 
 def validar_motivo(valor):
-    return texto_requerido(valor, "El motivo de la cita", 200)
+    return texto_requerido(valor, "El motivo de la cita", 500)
 
 
 def validar_diagnostico(valor):

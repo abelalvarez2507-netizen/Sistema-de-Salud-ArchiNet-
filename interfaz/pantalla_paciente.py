@@ -28,6 +28,30 @@ from interfaz.estilos import (
 from interfaz.navegacion import VistaDesplazable, instalar_navegacion
 
 
+SINTOMAS_CITA = (
+    "Tos seca",
+    "Tos con flema",
+    "Fiebre",
+    "Escalofríos",
+    "Congestión nasal",
+    "Dolor de garganta",
+    "Dolor de cabeza",
+    "Mareos",
+    "Dificultad para respirar",
+    "Dolor de pecho",
+    "Dolor abdominal",
+    "Náuseas",
+    "Vómitos",
+    "Diarrea",
+    "Fatiga",
+    "Dolor muscular",
+    "Dolor articular",
+    "Erupción en la piel",
+    "Ardor al orinar",
+    "Dolor de oído",
+)
+
+
 class PantallaPaciente:
 
     def __init__(
@@ -748,6 +772,76 @@ class PantallaPaciente:
                 return fecha, horarios[0]
         return None
 
+    def _crear_selector_sintomas(self, formulario):
+        tk.Label(
+            formulario,
+            text="Motivo de la cita:",
+            bg=COLOR_PANEL,
+            fg=COLOR_TEXTO,
+        ).pack(anchor="w")
+
+        panel_sintomas = tk.Frame(formulario, bg=COLOR_PANEL)
+        panel_sintomas.pack(fill="x", pady=(4, 8))
+
+        selecciones = []
+        columnas = 3
+        for indice, sintoma in enumerate(SINTOMAS_CITA):
+            seleccionado = tk.IntVar(master=panel_sintomas, value=0)
+            casilla = tk.Checkbutton(
+                panel_sintomas,
+                text=sintoma,
+                variable=seleccionado,
+                onvalue=1,
+                offvalue=0,
+                font=("Arial", 10),
+                bg=COLOR_PANEL,
+                fg=COLOR_TEXTO,
+                activebackground=COLOR_PANEL,
+                selectcolor=COLOR_PANEL_CLARO,
+                anchor="w",
+                wraplength=175,
+            )
+            casilla.grid(
+                row=indice // columnas,
+                column=indice % columnas,
+                sticky="w",
+                padx=(0, 12),
+                pady=2,
+            )
+            selecciones.append((sintoma, seleccionado))
+
+        tk.Label(
+            formulario,
+            text="Otro síntoma:",
+            bg=COLOR_PANEL,
+            fg=COLOR_TEXTO,
+        ).pack(anchor="w")
+        entrada_otro = tk.Entry(
+            formulario,
+            width=55,
+            bg=COLOR_PANEL_CLARO,
+            fg=COLOR_TEXTO,
+            insertbackground=COLOR_TEXTO,
+            relief="flat",
+        )
+        entrada_otro.pack(anchor="w", pady=(4, 8), ipady=6)
+
+        return selecciones, entrada_otro
+
+    @staticmethod
+    def _obtener_motivo_sintomas(selecciones, entrada_otro):
+        sintomas = [
+            sintoma
+            for sintoma, seleccionado in selecciones
+            if seleccionado.get()
+        ]
+        otro_sintoma = entrada_otro.get().strip()
+        if otro_sintoma:
+            sintomas.append(otro_sintoma)
+        if not sintomas:
+            raise ValueError("Selecciona o escribe al menos un síntoma.")
+        return ", ".join(sintomas)
+
     def solicitar_cita_directa(self):
         if not self.paciente_autenticado():
             return
@@ -799,23 +893,18 @@ class PantallaPaciente:
         )
         etiqueta_horario.pack(anchor="w", pady=(0, 14))
 
-        tk.Label(
-            formulario,
-            text="Motivo de la cita:",
-            bg=COLOR_PANEL,
-            fg=COLOR_TEXTO,
-        ).pack(anchor="w")
-        entrada_motivo = tk.Entry(
-            formulario,
-            width=55,
-            bg=COLOR_PANEL_CLARO,
-            fg=COLOR_TEXTO,
-            insertbackground=COLOR_TEXTO,
-            relief="flat",
-        )
-        entrada_motivo.pack(anchor="w", pady=(4, 8), ipady=6)
+        selecciones_sintomas, entrada_otro = self._crear_selector_sintomas(formulario)
 
         def guardar():
+            try:
+                motivo = self._obtener_motivo_sintomas(
+                    selecciones_sintomas,
+                    entrada_otro,
+                )
+            except ValueError as error:
+                messagebox.showwarning("Motivo de la cita", str(error))
+                return
+
             horario_actualizado = self._buscar_siguiente_horario_cita()
             if not horario_actualizado:
                 messagebox.showwarning(
@@ -843,7 +932,7 @@ class PantallaPaciente:
                 cita = self.sistema.crear_cita_asignacion_automatica(
                     self.paciente_actual,
                     siguiente_horario[0],
-                    entrada_motivo.get(),
+                    motivo,
                     siguiente_horario[1],
                 )
             except ValueError as error:
@@ -985,26 +1074,21 @@ class PantallaPaciente:
         entrada_fecha.bind("<FocusOut>", actualizar_horarios)
         entrada_fecha.bind("<Return>", actualizar_horarios)
 
-        tk.Label(formulario, text="Motivo de la cita:", bg=COLOR_PANEL, fg=COLOR_TEXTO).pack(anchor="w")
-        entrada_motivo = tk.Entry(
-            formulario,
-            width=55,
-            bg=COLOR_PANEL_CLARO,
-            fg=COLOR_TEXTO,
-            insertbackground=COLOR_TEXTO,
-            relief="flat",
-        )
-        entrada_motivo.pack(anchor="w", pady=(4, 8), ipady=6)
+        selecciones_sintomas, entrada_otro = self._crear_selector_sintomas(formulario)
 
         def guardar():
             try:
                 fecha = normalizar_fecha(entrada_fecha.get())
                 if not hora_var.get():
                     raise ValueError("Selecciona un horario disponible.")
+                motivo = self._obtener_motivo_sintomas(
+                    selecciones_sintomas,
+                    entrada_otro,
+                )
                 cita = self.sistema.crear_cita_asignacion_automatica(
                     self.paciente_actual,
                     fecha,
-                    entrada_motivo.get(),
+                    motivo,
                     hora_var.get(),
                 )
                 messagebox.showinfo(

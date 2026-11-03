@@ -40,6 +40,8 @@ Tkinter para la interfaz gráfica y SQLite para guardar la información.
 - Las citas de pacientes se asignan aleatoriamente a un médico general disponible;
   si ninguno está libre en el horario elegido, se asigna otro profesional médico
   disponible. El profesional asignado se muestra al confirmar la cita.
+- El motivo de una cita puede incluir varios síntomas de la lista o un síntoma
+  personalizado.
 - Al guardar el diagnóstico, los médicos generales deben seleccionar al especialista
   que recibirá la derivación. El paciente aparece en la agenda del profesional
   receptor y el informe remitente se conserva en el historial clínico.
@@ -146,7 +148,8 @@ SistemaRural-PE/
 ├── pruebas/
 │   ├── test_sistema.py
 │   ├── test_patrones.py
-│   └── test_desplazamiento.py
+│   ├── test_desplazamiento.py
+│   └── test_citas_paciente.py
 ├── datos/                  (salud.db se crea al ejecutar)
 ├── imagenes/
 │   └── icono_inicio.png
