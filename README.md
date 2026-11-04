@@ -112,6 +112,7 @@ SistemaRural-PE/
 ├── interfaz/
 │   ├── pantalla_inicio.py
 │   ├── pantalla_paciente.py
+│   ├── citas_paciente.py
 │   ├── pantalla_profesional.py
 │   ├── pantalla_enfermeria.py
 │   ├── pantalla_administrativa.py
