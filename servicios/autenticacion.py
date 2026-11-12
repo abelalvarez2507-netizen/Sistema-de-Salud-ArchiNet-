@@ -34,7 +34,13 @@ class SesionUsuario:
 
 class ServicioAutenticacion:
     # Roles permitidos y parámetros para proteger las contraseñas.
-    ROLES = {"paciente", "administrativa", "profesional", "enfermeria"}
+    ROLES = {
+        "paciente",
+        "administrativa",
+        "profesional",
+        "enfermeria",
+        "triaje",
+    }
     ITERACIONES_PASSWORD = 310_000
     LONGITUD_SAL = 16
     LONGITUD_HASH = 32
@@ -121,9 +127,17 @@ class ServicioAutenticacion:
         if rol == "paciente":
             if not self.repositorio.obtener_datos_paciente_acceso(codigo):
                 return None
-        elif rol in {"profesional", "enfermeria"}:
+        elif rol in {"profesional", "enfermeria", "triaje"}:
             personal = self.repositorio.obtener_datos_personal_acceso(codigo)
-            if not personal or not self._puede_entrar(personal[3], rol):
+            codigo_correcto = (
+                rol != "triaje"
+                or str(codigo or "").upper().startswith("FAM")
+            )
+            if (
+                not personal
+                or not codigo_correcto
+                or not self._puede_entrar(personal[3], rol)
+            ):
                 return None
 
         return SesionUsuario(rol, nombre, codigo)
@@ -143,9 +157,9 @@ class ServicioAutenticacion:
             raise ValueError(
                 "Debes aceptar los términos y condiciones para crear tu cuenta."
             )
-        if rol not in {"paciente", "profesional", "enfermeria"}:
+        if rol not in {"paciente", "profesional", "enfermeria", "triaje"}:
             raise ValueError("Este rol no admite el registro desde el acceso.")
-        if rol in {"profesional", "enfermeria"}:
+        if rol in {"profesional", "enfermeria", "triaje"}:
             # El personal debe ingresar el código exactamente como fue definido.
             if codigo_medico != self.CODIGO_MEDICO_REGISTRO:
                 raise ValueError("El código de autorización no es correcto.")
@@ -164,7 +178,10 @@ class ServicioAutenticacion:
                 )
             codigo_confirmado = persona[0]
         else:
-            personal = self.repositorio.obtener_datos_personal_por_dni(dni)
+            personal = self.repositorio.obtener_datos_personal_por_dni(
+                dni,
+                prefijo="FAM" if rol == "triaje" else None,
+            )
             if not personal:
                 raise ValueError(
                     "No encontramos un registro administrativo con ese DNI. "
@@ -205,7 +222,7 @@ class ServicioAutenticacion:
             raise ValueError(
                 "Debes aceptar los términos y condiciones para crear tu cuenta."
             )
-        if rol not in {"profesional", "enfermeria"}:
+        if rol not in {"profesional", "enfermeria", "triaje"}:
             raise ValueError("Este registro solo está disponible para personal de salud.")
         # Se valida antes de crear el registro o la cuenta del personal nuevo.
         if codigo_medico != self.CODIGO_MEDICO_REGISTRO:
@@ -222,11 +239,14 @@ class ServicioAutenticacion:
         password = self.validar_password(password)
         especialidad = (
             "Enfermería"
-            if rol == "enfermeria"
+            if rol in {"enfermeria", "triaje"}
             else validar_especialidad(especialidad)
         )
 
-        existente = self.repositorio.obtener_datos_personal_por_dni(dni)
+        existente = self.repositorio.obtener_datos_personal_por_dni(
+            dni,
+            prefijo="FAM" if rol == "triaje" else None,
+        )
         if existente:
             if not self._puede_entrar(existente[3], rol):
                 raise ValueError(
@@ -243,7 +263,11 @@ class ServicioAutenticacion:
             )
             return SesionUsuario(rol, usuario, codigo)
 
-        prefijo = "MTF" if rol == "enfermeria" else "CMP"
+        prefijo = {
+            "enfermeria": "MTF",
+            "triaje": "FAM",
+            "profesional": "CMP",
+        }[rol]
         ocupados = set()
         for fila in self.repositorio.obtener_personal():
             codigo_existente = str(fila[0]).upper()
@@ -259,7 +283,7 @@ class ServicioAutenticacion:
 
         personal = (
             PersonalEnfermeria(codigo, dni, nombre, edad)
-            if rol == "enfermeria"
+            if rol in {"enfermeria", "triaje"}
             else PersonalSalud(codigo, dni, nombre, edad, especialidad)
         )
         resumen, sal = self._proteger_password(password)
@@ -374,7 +398,7 @@ class ServicioAutenticacion:
             "NFKD", str(especialidad or "")
         ).encode("ascii", "ignore").decode("ascii").casefold()
         es_enfermeria = "enfermer" in texto
-        if rol == "enfermeria":
+        if rol in {"enfermeria", "triaje"}:
             return es_enfermeria
         if rol == "profesional":
             return not es_enfermeria

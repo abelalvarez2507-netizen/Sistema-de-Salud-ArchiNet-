@@ -112,7 +112,8 @@ class RepositorioSalud:
                         'paciente',
                         'administrativa',
                         'profesional',
-                        'enfermeria'
+                        'enfermeria',
+                        'triaje'
                     )
                 ),
                 codigo_referencia TEXT,
@@ -178,6 +179,59 @@ class RepositorioSalud:
     def _migrar_base_datos(self):
 
         cursor = self._conexion.cursor()
+
+        esquema_cuentas = cursor.execute(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' "
+            "AND name = 'cuentas_acceso'"
+        ).fetchone()
+        if esquema_cuentas and "'triaje'" not in str(esquema_cuentas[0]).casefold():
+            # Actualiza la restricción de roles de bases existentes sin perder
+            # las cuentas creadas antes de agregar el área de triaje.
+            with self._conexion:
+                cursor.execute("DROP INDEX IF EXISTS una_cuenta_administrativa")
+                cursor.execute(
+                    "ALTER TABLE cuentas_acceso RENAME TO cuentas_acceso_anterior"
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE cuentas_acceso (
+                        usuario TEXT PRIMARY KEY COLLATE NOCASE,
+                        rol TEXT NOT NULL CHECK (
+                            rol IN (
+                                'paciente',
+                                'administrativa',
+                                'profesional',
+                                'enfermeria',
+                                'triaje'
+                            )
+                        ),
+                        codigo_referencia TEXT,
+                        password_hash TEXT NOT NULL,
+                        password_salt TEXT NOT NULL,
+                        activo INTEGER NOT NULL DEFAULT 1,
+                        creado_en TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE (rol, codigo_referencia)
+                    )
+                    """
+                )
+                cursor.execute(
+                    """
+                    INSERT INTO cuentas_acceso
+                    (usuario, rol, codigo_referencia, password_hash,
+                     password_salt, activo, creado_en)
+                    SELECT usuario, rol, codigo_referencia, password_hash,
+                           password_salt, activo, creado_en
+                    FROM cuentas_acceso_anterior
+                    """
+                )
+                cursor.execute("DROP TABLE cuentas_acceso_anterior")
+                cursor.execute(
+                    """
+                    CREATE UNIQUE INDEX una_cuenta_administrativa
+                    ON cuentas_acceso (rol)
+                    WHERE rol = 'administrativa'
+                    """
+                )
 
         # -----------------------------------------------------
         # PACIENTES
@@ -676,15 +730,18 @@ class RepositorioSalud:
             (codigo.strip(),),
         ).fetchone()
 
-    def obtener_datos_personal_por_dni(self, dni):
+    def obtener_datos_personal_por_dni(self, dni, prefijo=None):
         """Busca el registro de personal verificando el DNI protegido."""
-        filas = self._conexion.execute(
-            """
+        consulta = """
             SELECT codigo_profesional, dni_hash, dni_salt, especialidad
             FROM personal
             WHERE dni_hash IS NOT NULL AND dni_salt IS NOT NULL
-            """
-        ).fetchall()
+        """
+        parametros = ()
+        if prefijo:
+            consulta += " AND codigo_profesional LIKE ?"
+            parametros = (f"{prefijo}%",)
+        filas = self._conexion.execute(consulta, parametros).fetchall()
         for codigo, resumen, sal, especialidad in filas:
             if SeguridadDatos.verificar(dni, sal, resumen):
                 return codigo, resumen, sal, especialidad

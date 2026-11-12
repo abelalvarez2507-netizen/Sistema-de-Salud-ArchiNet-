@@ -96,7 +96,7 @@ class PantallaEnfermeria:
             self.sistema.cerrar()
             raise ValueError("La cuenta ya no está asignada a enfermería.")
         self.enfermero_actual = personal[0]
-        self.ventana.title("Archinet - Portal de Enfermería")
+        self.ventana.title("Archinet - Área de ventas")
         self.ventana.configure(bg=COLOR_FONDO)
         self.mostrar_inicio()
 
@@ -138,9 +138,12 @@ class PantallaEnfermeria:
 
         barra = tk.Frame(contenido, bg=COLOR_FONDO)
         barra.pack(fill="x", pady=(0, 12))
+        self._boton(barra, "↔  Cambiar de área", self.cambiar_area).pack(
+            side="left"
+        )
         if mostrar_volver:
-            self._boton(barra, "←  Inicio de enfermería", self.mostrar_inicio).pack(
-                side="left"
+            self._boton(barra, "←  Inicio de ventas", self.mostrar_inicio).pack(
+                side="left", padx=(8, 0)
             )
         self._boton(barra, "Cerrar sesión", self.cerrar_sesion).pack(side="right")
         tk.Label(
@@ -282,7 +285,7 @@ class PantallaEnfermeria:
         farmacia = self.sistema.obtener_estadisticas_medicamentos()
         disponibles = self.sistema.obtener_medicamentos_disponibles()
         contenido = self._iniciar_pantalla(
-            "Portal de Enfermería",
+            "Área de ventas",
             f"{self.enfermero_actual.nombre} · Código "
             f"{self.enfermero_actual.codigo_profesional}",
         )
@@ -400,7 +403,7 @@ class PantallaEnfermeria:
         citas = self._citas_asignadas()
         contenido = self._iniciar_pantalla(
             "Agenda asignada",
-            "Citas vinculadas a tu cuenta de enfermería.",
+            "Citas vinculadas a tu cuenta del área de ventas.",
             mostrar_volver=True,
         )
         panel = self._tarjeta(contenido, "Próximas atenciones")
@@ -950,3 +953,11 @@ class PantallaEnfermeria:
         except Exception:
             pass
         self.pantalla_inicio.mostrar()
+
+    def cambiar_area(self):
+        """Regresa al selector para elegir ventas o triaje."""
+        try:
+            self.sistema.cerrar()
+        except Exception:
+            pass
+        self.pantalla_inicio.mostrar_selector_enfermeria()

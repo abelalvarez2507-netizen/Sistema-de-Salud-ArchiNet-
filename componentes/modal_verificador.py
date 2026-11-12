@@ -123,8 +123,12 @@ class ModalVerificador(tk.Frame):
             "Ingresar cuenta ",
         ),
         "enfermeria": (
-            "Área de enfermería",
-            "Ingresar cuenta",
+            "Área de ventas",
+            "Acceso al área de ventas.",
+        ),
+        "triaje": (
+            "Área de triaje",
+            "Acceso al área de triaje.",
         ),
     }
 
@@ -223,7 +227,11 @@ class ModalVerificador(tk.Frame):
         self.titulo.pack(pady=(20, 5))
         tk.Label(
             tarjeta,
-            text=f"{nombre}  ·  {descripcion}",
+            text=(
+                descripcion
+                if self.rol == "triaje"
+                else f"{nombre}  ·  {descripcion}"
+            ),
             font=FUENTE_SUBTITULO,
             fg=COLOR_GRIS_CLARO,
             bg=COLOR_BLANCO,
@@ -492,7 +500,11 @@ class ModalVerificador(tk.Frame):
         self._centrar()
 
     def _construir_modo(self, modo):
-        if modo == "registro" and self.rol in {"profesional", "enfermeria"}:
+        if modo == "registro" and self.rol in {
+            "profesional",
+            "enfermeria",
+            "triaje",
+        }:
             modo = "registro_personal_nuevo"
         self.modo = modo
         self._limpiar_formulario()
@@ -624,6 +636,11 @@ class ModalVerificador(tk.Frame):
             else:
                 tk.Label(
                     self.formulario,
+                    text=(
+                        "Área de triaje"
+                        if self.rol == "triaje"
+                        else "Área de enfermería"
+                    ),
                     font=FUENTE_BOTON,
                     fg=COLOR_TEXTO,
                     bg=COLOR_BLANCO,
@@ -669,7 +686,7 @@ class ModalVerificador(tk.Frame):
         if self.rol == "paciente":
             self._campo("Código de paciente", "codigo")
         self._campo("DNI", "dni", secreto=True)
-        if self.rol in {"profesional", "enfermeria"}:
+        if self.rol in {"profesional", "enfermeria", "triaje"}:
             self._campo("Código de verificacion", "codigo_medico", secreto=True)
         self._campo("Nuevo usuario", "usuario")
         self._campo("Nueva contraseña", "password", secreto=True)
@@ -685,7 +702,7 @@ class ModalVerificador(tk.Frame):
                     "Tu código de personal se asigna automáticamente; ingresa "
                     "el código médico autorizado. Usa una contraseña de 8 "
                     "caracteres como mínimo y al menos un número."
-                if self.rol in {"profesional", "enfermeria"}
+                if self.rol in {"profesional", "enfermeria", "triaje"}
                 else "Usa al menos 8 caracteres y un número. El DNI debe "
                 "coincidir con el registro existente."
             ),

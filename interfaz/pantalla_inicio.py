@@ -2,6 +2,7 @@ import math
 import os
 import tkinter as tk
 import tkinter.font as tkfont
+from tkinter import messagebox
 
 try:  # Pillow solo se usa para el fondo decorativo; si falta, se usa color liso.
     from PIL import Image, ImageTk
@@ -22,6 +23,7 @@ from interfaz.estilos import (
     COLOR_GRIS,
     FUENTE_TITULO,
     FUENTE_SUBTITULO,
+    FUENTE_BOTON,
     FUENTE_BOTON_GRANDE
 )
 from interfaz.navegacion import VistaDesplazable, instalar_navegacion
@@ -108,6 +110,9 @@ class PantallaInicio:
 
     def mostrar(self):
 
+        self._cancelar_ajuste_selector()
+        self.ventana.title("Archinet - Sistema de Salud Rural")
+
         # Elimina cualquier contenido anterior
         # de la ventana principal.
 
@@ -121,6 +126,8 @@ class PantallaInicio:
     # =========================================================
 
     def crear_interfaz(self):
+
+        self.ventana.title("Archinet - Sistema de Salud Rural")
 
         instalar_navegacion(
             self.ventana,
@@ -395,6 +402,11 @@ class PantallaInicio:
         # final y no llegaría ningún aviso nuevo, dejando todo apilado arriba.
         vista.canvas.bind("<Configure>", ajustar_alto, add="+")
         lienzo.bind("<Configure>", al_redimensionar)
+        lienzo.bind(
+            "<Map>",
+            lambda _evento: lienzo.after_idle(al_redimensionar),
+            add="+",
+        )
 
         def forzar_ajuste():
             try:
@@ -416,6 +428,7 @@ class PantallaInicio:
 
         self.ventana.after_idle(forzar_ajuste)
         self.ventana.after(120, forzar_ajuste)
+        self.ventana.after(350, forzar_ajuste)
 
     # =========================================================
     # FONDO DECORATIVO
@@ -579,8 +592,267 @@ class PantallaInicio:
         self._solicitar_acceso("profesional")
 
     def abrir_enfermeria(self):
-        """Abre el portal de acceso restringido para enfermería."""
-        self._solicitar_acceso("enfermeria")
+        """Permite elegir entre las áreas de ventas y triaje."""
+        self.mostrar_selector_enfermeria()
+
+    def _mostrar_selector_enfermeria(self):
+        self._cancelar_ajuste_selector()
+        for widget in self.ventana.winfo_children():
+            try:
+                widget.destroy()
+            except tk.TclError:
+                pass
+
+        instalar_navegacion(
+            self.ventana,
+            volver=self.mostrar,
+            inicio=self.mostrar,
+        )
+        lienzo = tk.Canvas(
+            self.ventana,
+            bg=COLOR_LIENZO_IMAGEN if Image is not None else COLOR_FONDO,
+            highlightthickness=0,
+            bd=0,
+        )
+        lienzo.pack(fill="both", expand=True)
+        self.ventana.title("Archinet - Selección de área de enfermería")
+        self._selector_canvas = lienzo
+        self._selector_fondo_original = self._cargar_imagen("fondo_rural.jpg")
+        self._selector_foto_fondo = None
+        self._selector_tamano_fondo = None
+        self._selector_after = None
+        self._selector_id_fondo = lienzo.create_image(0, 0, anchor="nw")
+
+        self._selector_icono_original = self._cargar_imagen("icono_inicio.png")
+        self._selector_foto_icono = None
+        self._selector_id_icono = None
+        self._selector_icono_ancho = 0
+        if self._selector_icono_original is not None and ImageTk is not None:
+            alto_icono = 54
+            self._selector_icono_ancho = round(
+                self._selector_icono_original.width
+                * alto_icono / self._selector_icono_original.height
+            )
+            icono = self._selector_icono_original.resize(
+                (self._selector_icono_ancho, alto_icono), Image.LANCZOS
+            )
+            self._selector_foto_icono = ImageTk.PhotoImage(icono)
+            self._selector_id_icono = lienzo.create_image(
+                0, 0, anchor="center", image=self._selector_foto_icono
+            )
+
+        self._selector_fuente_logo = tkfont.Font(
+            root=self.ventana, font=FUENTE_LOGO_INICIO
+        )
+        self._selector_id_logo_archi = lienzo.create_text(
+            0,
+            0,
+            text="Archi",
+            anchor="w",
+            font=FUENTE_LOGO_INICIO,
+            fill=COLOR_LOGO_AZUL,
+        )
+        self._selector_id_logo_net = lienzo.create_text(
+            0,
+            0,
+            text="net",
+            anchor="w",
+            font=FUENTE_LOGO_INICIO,
+            fill=COLOR_LOGO_VERDE,
+        )
+
+        boton_inicio = tk.Button(
+            lienzo,
+            text="←  Inicio",
+            command=self.mostrar,
+            font=FUENTE_BOTON,
+            bg=COLOR_BLANCO,
+            fg=COLOR_TEXTO,
+            activebackground=COLOR_PANEL_CLARO,
+            activeforeground=COLOR_TEXTO,
+            relief="flat",
+            cursor="hand2",
+            padx=14,
+            pady=8,
+        )
+        lienzo.create_window(
+            28, 26, anchor="nw", window=boton_inicio
+        )
+
+        tarjeta = tk.Frame(
+            lienzo,
+            bg=COLOR_BLANCO,
+            padx=30,
+            pady=26,
+            highlightthickness=1,
+            highlightbackground="#DCE8E1",
+        )
+        tk.Label(
+            tarjeta,
+            text="Enfermería",
+            font=FUENTE_TITULO,
+            fg=COLOR_TEXTO,
+            bg=COLOR_BLANCO,
+        ).pack(pady=(0, 7))
+        tk.Label(
+            tarjeta,
+            text="Seleccione el área a la que desea ingresar",
+            font=FUENTE_SUBTITULO,
+            fg=COLOR_GRIS_CLARO,
+            bg=COLOR_BLANCO,
+        ).pack(pady=(0, 20))
+
+        opciones = tk.Frame(tarjeta, bg=COLOR_BLANCO)
+        opciones.pack()
+        for texto, rol, fondo in (
+            ("Área de ventas", "enfermeria", COLOR_PANEL_CLARO),
+            ("Área de triaje", "triaje", COLOR_PANEL),
+        ):
+            boton = tk.Button(
+                opciones,
+                text=texto,
+                font=FUENTE_BOTON_GRANDE,
+                width=23,
+                height=3,
+                bg=fondo,
+                fg=COLOR_TEXTO,
+                activebackground=COLOR_ROJO,
+                activeforeground=COLOR_BLANCO,
+                relief="flat",
+                bd=1,
+                highlightthickness=0,
+                cursor="hand2",
+                command=lambda area=rol: self._solicitar_acceso(area),
+            )
+            boton.bind(
+                "<Enter>",
+                lambda _evento, control=boton: control.configure(
+                    bg=COLOR_ROJO, fg=COLOR_BLANCO
+                ),
+            )
+            boton.bind(
+                "<Leave>",
+                lambda _evento, control=boton, color=fondo: control.configure(
+                    bg=color, fg=COLOR_TEXTO
+                ),
+            )
+            boton.pack(side="left", padx=8)
+
+        self._selector_id_tarjeta = lienzo.create_window(
+            0, 0, anchor="center", window=tarjeta
+        )
+        lienzo.bind(
+            "<Configure>",
+            lambda _evento: self._programar_ajuste_selector(),
+        )
+        lienzo.bind(
+            "<Map>",
+            lambda _evento: lienzo.after_idle(self._ajustar_selector),
+            add="+",
+        )
+        self.ventana.after_idle(self._ajustar_selector)
+        self.ventana.after(120, self._ajustar_selector)
+        self.ventana.after(350, self._ajustar_selector)
+
+    def mostrar_selector_enfermeria(self):
+        """Abre el selector conservando el fondo y el diseño originales."""
+        try:
+            self._mostrar_selector_enfermeria()
+        except Exception as error:
+            self.mostrar()
+            messagebox.showerror(
+                "No se pudo abrir Enfermería",
+                f"No se pudo cargar el selector de ventas y triaje.\n\n{error}",
+                parent=self.ventana,
+            )
+
+    def _programar_ajuste_selector(self):
+        lienzo = getattr(self, "_selector_canvas", None)
+        if lienzo is None:
+            return
+        try:
+            if self._selector_after is not None:
+                lienzo.after_cancel(self._selector_after)
+            self._selector_after = lienzo.after(
+                40, self._ajustar_selector
+            )
+        except tk.TclError:
+            self._selector_after = None
+
+    def _cancelar_ajuste_selector(self):
+        lienzo = getattr(self, "_selector_canvas", None)
+        after_id = getattr(self, "_selector_after", None)
+        if lienzo is not None and after_id is not None:
+            try:
+                lienzo.after_cancel(after_id)
+            except tk.TclError:
+                pass
+        self._selector_after = None
+
+    def _ajustar_selector(self):
+        self._selector_after = None
+        lienzo = getattr(self, "_selector_canvas", None)
+        if lienzo is None:
+            return
+        try:
+            ancho = lienzo.winfo_width()
+            alto = lienzo.winfo_height()
+        except tk.TclError:
+            return
+        if ancho < 50 or alto < 50:
+            return
+
+        fondo = self._selector_fondo_original
+        if fondo is not None and ImageTk is not None:
+            if (ancho, alto) != self._selector_tamano_fondo:
+                escala = max(ancho / fondo.width, alto / fondo.height)
+                nuevo_ancho = math.ceil(fondo.width * escala)
+                nuevo_alto = math.ceil(fondo.height * escala)
+                imagen = fondo.resize(
+                    (nuevo_ancho, nuevo_alto), Image.LANCZOS
+                )
+                izquierda = (nuevo_ancho - ancho) // 2
+                arriba = (nuevo_alto - alto) // 2
+                imagen = imagen.crop(
+                    (izquierda, arriba, izquierda + ancho, arriba + alto)
+                )
+                self._selector_foto_fondo = ImageTk.PhotoImage(
+                    imagen.convert("RGB")
+                )
+                lienzo.itemconfigure(
+                    self._selector_id_fondo,
+                    image=self._selector_foto_fondo,
+                )
+                lienzo.tag_lower(self._selector_id_fondo)
+                self._selector_tamano_fondo = (ancho, alto)
+
+        centro = ancho // 2
+        ancho_archi = self._selector_fuente_logo.measure("Archi")
+        ancho_net = self._selector_fuente_logo.measure("net")
+        ancho_texto = ancho_archi + ancho_net
+        ancho_logo = self._selector_icono_ancho + 12 + ancho_texto
+        inicio_logo = centro - ancho_logo // 2
+        y_logo = 76
+        if self._selector_id_icono is not None:
+            lienzo.coords(
+                self._selector_id_icono,
+                inicio_logo + self._selector_icono_ancho // 2,
+                y_logo,
+            )
+            inicio_texto = inicio_logo + self._selector_icono_ancho + 12
+        else:
+            inicio_texto = centro - ancho_texto // 2
+        lienzo.coords(self._selector_id_logo_archi, inicio_texto, y_logo)
+        lienzo.coords(
+            self._selector_id_logo_net,
+            inicio_texto + ancho_archi,
+            y_logo,
+        )
+        lienzo.coords(
+            self._selector_id_tarjeta,
+            centro,
+            alto // 2 + 38,
+        )
 
     def _solicitar_acceso(self, rol):
         from componentes.modal_verificador import ModalVerificador
@@ -588,29 +860,44 @@ class PantallaInicio:
         ModalVerificador(self.ventana, rol, self._acceso_concedido)
 
     def _acceso_concedido(self, sesion):
-        for widget in self.ventana.winfo_children():
+        self._cancelar_ajuste_selector()
+        try:
+            if sesion.rol == "paciente":
+                from interfaz.pantalla_paciente import PantallaPaciente
+
+                PantallaPaciente(self.ventana, self, sesion)
+            elif sesion.rol == "administrativa":
+                from interfaz.pantalla_administrativa import VentanaPrincipal
+
+                VentanaPrincipal(
+                    self.ventana,
+                    pantalla_inicio=self,
+                    sesion=sesion,
+                )
+            elif sesion.rol == "profesional":
+                from interfaz.pantalla_profesional import PantallaProfesional
+
+                PantallaProfesional(self.ventana, self, sesion)
+            elif sesion.rol == "enfermeria":
+                from interfaz.pantalla_enfermeria import PantallaEnfermeria
+
+                PantallaEnfermeria(self.ventana, self, sesion)
+            elif sesion.rol == "triaje":
+                from interfaz.pantalla_triaje import PantallaTriaje
+
+                PantallaTriaje(self.ventana, self, sesion)
+            else:
+                raise ValueError("El tipo de cuenta no tiene una pantalla asignada.")
+        except Exception as error:
             try:
-                widget.destroy()
-            except tk.TclError:
-                pass
-
-        if sesion.rol == "paciente":
-            from interfaz.pantalla_paciente import PantallaPaciente
-
-            PantallaPaciente(self.ventana, self, sesion)
-        elif sesion.rol == "administrativa":
-            from interfaz.pantalla_administrativa import VentanaPrincipal
-
-            VentanaPrincipal(
-                self.ventana,
-                pantalla_inicio=self,
-                sesion=sesion,
+                if sesion.rol in {"enfermeria", "triaje"}:
+                    self._mostrar_selector_enfermeria()
+                else:
+                    self.mostrar()
+            except Exception:
+                self.mostrar()
+            messagebox.showerror(
+                "No se pudo abrir el área",
+                f"No se pudo cargar la pantalla solicitada.\n\n{error}",
+                parent=self.ventana,
             )
-        elif sesion.rol == "profesional":
-            from interfaz.pantalla_profesional import PantallaProfesional
-
-            PantallaProfesional(self.ventana, self, sesion)
-        elif sesion.rol == "enfermeria":
-            from interfaz.pantalla_enfermeria import PantallaEnfermeria
-
-            PantallaEnfermeria(self.ventana, self, sesion)

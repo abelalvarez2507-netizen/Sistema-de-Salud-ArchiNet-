@@ -10,8 +10,9 @@ Tkinter para la interfaz gráfica y SQLite para guardar la información.
 ## 1. Funcionalidades
 
 - Registro, consulta y búsqueda de pacientes, profesionales y personal de enfermería.
-- Códigos secuenciales independientes para profesionales (CMP001...) y enfermería (MTF001...), sin tope de numeración. El código médico secreto se solicita al crear la cuenta de acceso del personal.
-- Acceso a los módulos de paciente, profesional, enfermería y administración.
+- Códigos secuenciales independientes para profesionales (CMP001...), ventas/enfermería (MTF001...) y triaje (FAM001...), sin tope de numeración. El código médico secreto se solicita al crear la cuenta de acceso del personal.
+- Al elegir Enfermería en la pantalla inicial, se puede ingresar al área de ventas o al área de triaje.
+- Acceso a los módulos de paciente, profesional, ventas, triaje y administración.
 - Inicio de sesión con cuentas independientes por rol. Los accesos no se
   conceden solo por conocer un código o un DNI.
 - Las cuentas de personal se vinculan por DNI al registro administrativo o crean
@@ -21,12 +22,12 @@ Tkinter para la interfaz gráfica y SQLite para guardar la información.
   indica nombre, edad, DNI, usuario y contraseña, sin requerir código médico. Si
   el DNI ya existe, la cuenta se vincula al paciente registrado; si no, el sistema
   crea el registro con código automático (P001, P002...).
-- Registro nuevo de profesionales y enfermería desde su acceso: se solicitan
-  nombre, edad, DNI de 8 dígitos y código médico secreto; el sistema asigna
-  automáticamente el código CMP o MTF correspondiente.
-- Portal de enfermería limitado a las citas asignadas al personal registrado
-  con especialidad de enfermería.
-- Panel de enfermería con indicadores de citas, stock disponible y ventas del día.
+- Registro nuevo de profesionales, ventas/enfermería y triaje desde su acceso:
+  se solicitan nombre, edad, DNI de 8 dígitos y código médico secreto; el sistema
+  asigna automáticamente el código CMP, MTF o FAM correspondiente.
+- Área de ventas con el portal actual de enfermería: citas asignadas al personal
+  registrado con especialidad de enfermería, indicadores, stock y ventas.
+- Área de triaje con inicio de sesión independiente y pantalla inicial sin módulos.
 - Registro de medicamentos por lote, consulta de existencias vigentes y venta
   con descuento automático del stock. El formulario ofrece cuatro nombres de
   medicamento y 40 principios activos; al elegir Paracetamol, Ibuprofeno,
@@ -115,6 +116,7 @@ SistemaRural-PE/
 │   ├── citas_paciente.py
 │   ├── pantalla_profesional.py
 │   ├── pantalla_enfermeria.py
+│   ├── pantalla_triaje.py
 │   ├── pantalla_administrativa.py
 │   ├── campos/
 │   │   └── fecha.py
@@ -187,18 +189,18 @@ correspondiente.
   inicial. El formulario de configuración deja de aparecer después de crearla.
 - Usa el panel administrativo para registrar pacientes y personal. El personal
   también puede crear su propio registro al crear una cuenta de acceso.
-- En cada acceso de paciente, profesional o enfermería, el paciente selecciona
-  **Crear cuenta de acceso**. Para profesional y enfermería, **Soy personal
-  nuevo** abre directamente un único formulario para registro y acceso. El
-  paciente valida su código y DNI. Profesional y enfermería pueden vincularse a
-  un registro existente mediante el DNI o crear uno nuevo; su código de personal
-  se genera automáticamente. Se solicita el código de autorización compartido
-  `ArchiNet2026`, respetando exactamente las mayúsculas y minúsculas. Los campos
+- En cada acceso de paciente, profesional, ventas o triaje, se puede seleccionar
+  **Crear cuenta de acceso**. Para el personal, se abre un formulario para
+  registro y acceso. El paciente valida su código y DNI. Profesional, ventas y
+  triaje pueden vincularse a un registro existente mediante el DNI o crear uno
+  nuevo; su código se genera automáticamente (CMP, MTF o FAM). Se solicita el
+  código de autorización compartido `ArchiNet2026`, respetando exactamente las
+  mayúsculas y minúsculas. Los campos
   de DNI aceptan exactamente 8 dígitos y los nombres solo letras, tildes, ñ y
   espacios. Todas las altas nuevas
   solicitan aceptar los términos y condiciones; el inicio de sesión de cuentas
   existentes no.
-- El rol de enfermería solo se asigna a registros con especialidad de
+- Los roles de ventas y triaje solo se asignan a registros con especialidad de
   enfermería. El acceso administrativo es independiente y no se puede crear
   desde los formularios de paciente o personal.
 
