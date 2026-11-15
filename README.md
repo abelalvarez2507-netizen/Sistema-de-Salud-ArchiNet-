@@ -27,7 +27,8 @@ Tkinter para la interfaz gráfica y SQLite para guardar la información.
   asigna automáticamente el código CMP, MTF o FAM correspondiente.
 - Área de ventas con el portal actual de enfermería: citas asignadas al personal
   registrado con especialidad de enfermería, indicadores, stock y ventas.
-- Área de triaje con inicio de sesión independiente y pantalla inicial sin módulos.
+- Área de triaje con inicio de sesión independiente, agenda de citas regulares y
+  registro de signos vitales por el personal técnico.
 - Registro de medicamentos por lote, consulta de existencias vigentes y venta
   con descuento automático del stock. El formulario ofrece cuatro nombres de
   medicamento y 40 principios activos; al elegir Paracetamol, Ibuprofeno,
@@ -38,16 +39,23 @@ Tkinter para la interfaz gráfica y SQLite para guardar la información.
   precio, la cantidad, el usuario responsable y su fecha y hora.
 - Los campos de fecha aceptan ocho dígitos y colocan automáticamente las barras
   en formato DD/MM/AAAA.
-- Las citas de pacientes se asignan aleatoriamente a un médico general disponible;
-  si ninguno está libre en el horario elegido, se asigna otro profesional médico
-  disponible. El profesional asignado se muestra al confirmar la cita.
+- La cita regular se agenda con personal técnico de triaje; durante la atención
+  se registran signos vitales y uno de cinco niveles de prioridad. Al guardar la
+  valoración, el sistema agenda una consulta con Medicina General y da prioridad
+  a los niveles 1 y 2, reprogramando una cita ordinaria cuando haga falta.
+- La cita directa muestra un catálogo de áreas médicas y permite elegir el
+  profesional registrado de esa especialidad antes de buscar horarios.
+- El triaje guarda temperatura, presión arterial, frecuencia cardíaca, saturación
+  de oxígeno, peso, talla y el nivel 1–5 seleccionado por el técnico. Los niveles
+  1 y 2 reciben prioridad de Medicina General; si corresponde, el médico general
+  puede indicar una derivación urgente a un especialista.
 - El motivo de una cita puede incluir varios síntomas de la lista o un síntoma
   personalizado.
-- Cita directa y Cita regular usan los mismos campos para elegir fecha y hora.
-  La fecha y hora de generación se guarda aparte de la fecha y hora de atención.
-- Al guardar el diagnóstico, los médicos generales deben seleccionar al especialista
-  que recibirá la derivación. El paciente aparece en la agenda del profesional
-  receptor y el informe remitente se conserva en el historial clínico.
+- En ambas modalidades se guardan por separado la fecha y hora de generación y
+  las de atención. Los turnos duran 20 minutos.
+- Las derivaciones desde Medicina General se limitan a los niveles de triaje 1 y
+  2. El área que corresponde se elige tras el diagnóstico, y el sistema agenda la
+  cita urgente con el especialista elegido.
 - El profesional cuenta con vistas separadas para sus atenciones de hoy y su
   historial de atenciones finalizadas o derivadas.
 - Los turnos pasan automáticamente a «En proceso» al comenzar. Al finalizar el
@@ -73,8 +81,8 @@ Tkinter para la interfaz gráfica y SQLite para guardar la información.
   queda oculto mientras se consulta el resultado.
 - Registro, consulta, cancelación y reprogramación de citas.
 - Registro y actualización de atenciones médicas e historiales clínicos.
-- Turnos de 30 minutos entre las 07:00 y las 18:00; el último turno comienza a
-  las 17:30. El sistema rechaza citas pasadas y evita reservar el mismo horario
+- Turnos de 20 minutos entre las 07:00 y las 18:00; el último turno comienza a
+  las 17:40. El sistema rechaza citas pasadas y evita reservar el mismo horario
   para un profesional.
 - Cancelación automática de citas pendientes o reprogramadas que ya vencieron.
 - Reportes y estadísticas básicas del establecimiento.
@@ -137,6 +145,8 @@ SistemaRural-PE/
 │   ├── personal_salud.py
 │   ├── cita.py
 │   ├── atencion_medica.py
+│   ├── valoracion_triaje.py
+│   ├── especialidades.py
 │   └── medicamento_recetado.py
 ├── servicios/
 │   ├── sistema_salud.py

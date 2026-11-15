@@ -241,7 +241,7 @@ class PantallaInicio:
         )
 
         # =====================================================
-        # BOTONES DE ROL (mismos botones y comandos de siempre)
+        # BOTONES DE ROL
         # =====================================================
 
         roles = (

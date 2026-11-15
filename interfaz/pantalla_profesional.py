@@ -396,21 +396,33 @@ class PantallaProfesional:
 
     def _citas_para_profesional(self):
         codigo = self.profesional_actual.codigo_profesional
-        atenciones = {
-            atencion.cita.codigo: atencion
-            for atencion in self.sistema.obtener_atenciones()
-        }
-        return [
-            cita
-            for cita in self.sistema.obtener_citas()
-            if cita.profesional.codigo_profesional == codigo
-            or (
-                atenciones.get(cita.codigo)
-                and atenciones[cita.codigo].profesional_derivado
-                and atenciones[cita.codigo].profesional_derivado.codigo_profesional
-                == codigo
+        citas = self.sistema.obtener_citas()
+        resultado = []
+        for cita in citas:
+            if cita.profesional.codigo_profesional == codigo:
+                resultado.append(cita)
+                continue
+            atencion = self._atencion_de(cita)
+            if not atencion or not atencion.profesional_derivado:
+                continue
+            es_cita_urgente = (
+                cita.tipo_cita == "Derivación urgente"
+                and cita.cita_origen_codigo == atencion.cita.codigo
             )
-        ]
+            es_derivacion_anterior = (
+                cita.codigo == atencion.cita.codigo
+                and not any(
+                    item.tipo_cita == "Derivación urgente"
+                    and item.cita_origen_codigo == cita.codigo
+                    for item in citas
+                )
+            )
+            if (
+                (es_cita_urgente or es_derivacion_anterior)
+                and atencion.profesional_derivado.codigo_profesional == codigo
+            ):
+                resultado.append(cita)
+        return resultado
 
     def _derivada_a_actual(self, cita):
         atencion = self._atencion_de(cita)
@@ -639,7 +651,10 @@ class PantallaProfesional:
             (
                 atencion
                 for atencion in self.sistema.obtener_atenciones()
-                if atencion.cita.codigo == cita.codigo
+                if (
+                    atencion.cita.codigo == cita.codigo
+                    or cita.cita_origen_codigo == atencion.cita.codigo
+                )
             ),
             None,
         )
@@ -703,14 +718,58 @@ class PantallaProfesional:
             self.profesional_actual.especialidad.strip().casefold()
             == "medicina general"
         )
+        valoracion = self.sistema.obtener_valoracion_para_cita(cita)
+        es_derivacion_urgente = (
+            es_medico_general and self.sistema.puede_derivar_cita(cita)
+        )
+        if valoracion:
+            color_nivel = {
+                1: "rojo",
+                2: "naranja",
+                3: "amarillo",
+                4: "verde",
+                5: "azul",
+            }[valoracion.nivel]
+            tk.Label(
+                contenido,
+                text=(
+                    f"Triaje nivel {valoracion.nivel} · {color_nivel} · "
+                    f"Temperatura {valoracion.temperatura:g} °C · "
+                    f"presión {valoracion.presion_arterial} · "
+                    f"frecuencia cardíaca {valoracion.frecuencia_cardiaca:g} · "
+                    f"saturación {valoracion.saturacion_oxigeno:g}% · "
+                    f"peso {valoracion.peso:g} kg · talla {valoracion.talla:g} cm"
+                ),
+                font=FUENTE_BOTON,
+                fg=COLOR_TEXTO,
+                bg=COLOR_PANEL,
+                wraplength=1000,
+                justify="left",
+                padx=14,
+                pady=10,
+            ).pack(fill="x", padx=22, pady=(0, 10))
         opciones_derivacion = {}
         derivacion_var = None
-        if es_medico_general:
+        if es_medico_general and not es_derivacion_urgente:
+            tk.Label(
+                contenido,
+                text=(
+                    "Las derivaciones desde Medicina General se reservan para una urgencia "
+                    "de nivel 1 o 2. Si se recomienda otra área en una consulta ordinaria, "
+                    "indícala en el diagnóstico para que el paciente solicite una cita directa."
+                ),
+                font=("Arial", 10),
+                fg=COLOR_GRIS_CLARO,
+                bg=COLOR_FONDO,
+                wraplength=1000,
+                justify="left",
+            ).pack(anchor="w", padx=22, pady=(0, 10))
+        if es_derivacion_urgente:
             panel_derivacion = tk.Frame(contenido, bg=COLOR_PANEL, padx=14, pady=12)
             panel_derivacion.pack(fill="x", padx=22, pady=(4, 10))
             tk.Label(
                 panel_derivacion,
-                text="Derivar a",
+                text="Derivación urgente · el sistema agendará al profesional que elijas",
                 font=("Arial", 16, "bold"),
                 fg=COLOR_TEXTO,
                 bg=COLOR_PANEL,
@@ -853,7 +912,7 @@ class PantallaProfesional:
                 diagnostico = validar_diagnostico(texto.get("1.0", "end-1c"))
                 recetas = leer_recetas()
                 profesional_derivado = None
-                if es_medico_general:
+                if es_derivacion_urgente:
                     profesional_derivado = opciones_derivacion.get(
                         derivacion_var.get()
                     )

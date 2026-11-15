@@ -72,7 +72,31 @@ class RepositorioSalud:
                 hora TEXT NOT NULL DEFAULT '09:00',
                 motivo TEXT NOT NULL,
                 estado TEXT NOT NULL,
-                fecha_generacion TEXT
+                fecha_generacion TEXT,
+                tipo_cita TEXT NOT NULL DEFAULT 'Directa',
+                cita_origen_codigo TEXT
+            )
+            """
+        )
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS valoraciones_triaje (
+                cita_codigo TEXT PRIMARY KEY,
+                enfermero_codigo TEXT NOT NULL,
+                temperatura REAL NOT NULL,
+                presion_arterial TEXT NOT NULL,
+                frecuencia_cardiaca REAL NOT NULL,
+                saturacion_oxigeno REAL NOT NULL,
+                peso REAL NOT NULL,
+                talla REAL NOT NULL,
+                nivel INTEGER NOT NULL CHECK (nivel BETWEEN 1 AND 5),
+                cita_medica_codigo TEXT NOT NULL,
+                fuera_plazo INTEGER NOT NULL DEFAULT 0,
+                fecha_registro TEXT NOT NULL,
+                FOREIGN KEY (cita_codigo) REFERENCES citas(codigo),
+                FOREIGN KEY (enfermero_codigo) REFERENCES personal(codigo_profesional),
+                FOREIGN KEY (cita_medica_codigo) REFERENCES citas(codigo)
             )
             """
         )
@@ -351,6 +375,16 @@ class RepositorioSalud:
         if "fecha_generacion" not in columnas_citas:
             cursor.execute(
                 "ALTER TABLE citas ADD COLUMN fecha_generacion TEXT"
+            )
+
+        if "tipo_cita" not in columnas_citas:
+            cursor.execute(
+                "ALTER TABLE citas ADD COLUMN tipo_cita TEXT NOT NULL DEFAULT 'Directa'"
+            )
+
+        if "cita_origen_codigo" not in columnas_citas:
+            cursor.execute(
+                "ALTER TABLE citas ADD COLUMN cita_origen_codigo TEXT"
             )
 
         columnas_atenciones = [
@@ -708,6 +742,18 @@ class RepositorioSalud:
             """
         ).fetchall()
 
+    def obtener_codigos_personal_por_rol(self, rol):
+        return {
+            fila[0]
+            for fila in self._conexion.execute(
+                """
+                SELECT codigo_referencia FROM cuentas_acceso
+                WHERE rol = ? AND activo = 1 AND codigo_referencia IS NOT NULL
+                """,
+                (rol,),
+            ).fetchall()
+        }
+
     def obtener_datos_paciente_acceso(self, codigo):
         """Devuelve solo los datos necesarios para comprobar la identidad."""
         return self._conexion.execute(
@@ -854,9 +900,11 @@ class RepositorioSalud:
                         hora,
                         motivo,
                         estado,
-                        fecha_generacion
+                        fecha_generacion,
+                        tipo_cita,
+                        cita_origen_codigo
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         cita.codigo,
@@ -871,6 +919,8 @@ class RepositorioSalud:
                             if cita.fecha_generacion
                             else None
                         ),
+                        cita.tipo_cita,
+                        cita.cita_origen_codigo,
                     )
                 )
 
@@ -894,7 +944,9 @@ class RepositorioSalud:
                 hora,
                 motivo,
                 estado,
-                fecha_generacion
+                fecha_generacion,
+                tipo_cita,
+                cita_origen_codigo
             FROM citas
             ORDER BY codigo
             """
@@ -932,6 +984,48 @@ class RepositorioSalud:
                 "UPDATE citas SET fecha = ?, hora = ?, estado = ? WHERE codigo = ?",
                 (fecha, hora, estado, codigo_cita),
             )
+
+    def guardar_valoracion_triaje(self, valoracion):
+        try:
+            with self._conexion:
+                self._conexion.execute(
+                    """
+                    INSERT INTO valoraciones_triaje (
+                        cita_codigo, enfermero_codigo, temperatura,
+                        presion_arterial, frecuencia_cardiaca,
+                        saturacion_oxigeno, peso, talla, nivel,
+                        cita_medica_codigo, fuera_plazo, fecha_registro
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        valoracion.cita_codigo,
+                        valoracion.enfermero_codigo,
+                        valoracion.temperatura,
+                        valoracion.presion_arterial,
+                        valoracion.frecuencia_cardiaca,
+                        valoracion.saturacion_oxigeno,
+                        valoracion.peso,
+                        valoracion.talla,
+                        valoracion.nivel,
+                        valoracion.cita_medica_codigo,
+                        int(valoracion.fuera_plazo),
+                        valoracion.fecha_registro.isoformat(sep=" "),
+                    ),
+                )
+        except sqlite3.IntegrityError as error:
+            raise ValueError("No se pudo guardar la valoración de triaje.") from error
+
+    def obtener_valoraciones_triaje(self):
+        return self._conexion.execute(
+            """
+            SELECT cita_codigo, enfermero_codigo, temperatura,
+                   presion_arterial, frecuencia_cardiaca,
+                   saturacion_oxigeno, peso, talla, nivel,
+                   cita_medica_codigo, fuera_plazo, fecha_registro
+            FROM valoraciones_triaje
+            ORDER BY fecha_registro, cita_codigo
+            """
+        ).fetchall()
 
     # =========================================================
     # ATENCIONES

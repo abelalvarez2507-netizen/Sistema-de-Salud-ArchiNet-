@@ -97,6 +97,8 @@ class FabricaEntidades:
         estado="Pendiente",
         hora="09:00",
         fecha_generacion=_FECHA_GENERACION_NO_ESPECIFICADA,
+        tipo_cita="Directa",
+        cita_origen_codigo=None,
     ):
         if fecha_generacion is _FECHA_GENERACION_NO_ESPECIFICADA:
             return Cita(
@@ -107,6 +109,8 @@ class FabricaEntidades:
                 motivo,
                 estado,
                 hora,
+                tipo_cita=tipo_cita,
+                cita_origen_codigo=cita_origen_codigo,
             )
         return Cita(
             codigo,
@@ -117,6 +121,8 @@ class FabricaEntidades:
             estado,
             hora,
             fecha_generacion,
+            tipo_cita,
+            cita_origen_codigo,
         )
 
     @staticmethod

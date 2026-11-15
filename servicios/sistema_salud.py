@@ -3,6 +3,7 @@ from modelos.cita import Cita
 from modelos.personal_salud import PersonalSalud
 from modelos.atencion_medica import AtencionMedica
 from modelos.medicamento_recetado import MedicamentoRecetado
+from modelos.valoracion_triaje import ValoracionTriaje
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import random
@@ -44,11 +45,13 @@ class SistemaSalud:
         self._personal = []
         self._citas = []
         self._atenciones = []
+        self._valoraciones_triaje = []
 
         self._cargar_pacientes()
         self._cargar_personal()
         self._cargar_citas()
         self._cargar_atenciones()
+        self._cargar_valoraciones_triaje()
         self.actualizar_citas_vencidas()
 
     # =========================================================
@@ -127,6 +130,8 @@ class SistemaSalud:
         )
 
         for fila in datos:
+            tipo_cita = "Directa"
+            cita_origen_codigo = None
             if len(fila) == 6:
                 (
                     codigo,
@@ -149,6 +154,19 @@ class SistemaSalud:
                     estado,
                 ) = fila
                 fecha_generacion = None
+            elif len(fila) >= 10:
+                (
+                    codigo,
+                    paciente_codigo,
+                    profesional_codigo,
+                    fecha,
+                    hora,
+                    motivo,
+                    estado,
+                    fecha_generacion,
+                    tipo_cita,
+                    cita_origen_codigo,
+                ) = fila[:10]
             else:
                 (
                     codigo,
@@ -205,6 +223,8 @@ class SistemaSalud:
                     estado,
                     hora,
                     fecha_generacion,
+                    tipo_cita,
+                    cita_origen_codigo,
                 )
             )
 
@@ -266,6 +286,40 @@ class SistemaSalud:
                 informe_derivacion,
             )
             self._atenciones.append(atencion)
+
+    def _cargar_valoraciones_triaje(self):
+        if not hasattr(self._repositorio, "obtener_valoraciones_triaje"):
+            return
+        self._valoraciones_triaje = [
+            ValoracionTriaje(
+                cita_codigo,
+                enfermero_codigo,
+                temperatura,
+                presion_arterial,
+                frecuencia_cardiaca,
+                saturacion_oxigeno,
+                peso,
+                talla,
+                nivel,
+                cita_medica_codigo,
+                bool(fuera_plazo),
+                fecha_registro,
+            )
+            for (
+                cita_codigo,
+                enfermero_codigo,
+                temperatura,
+                presion_arterial,
+                frecuencia_cardiaca,
+                saturacion_oxigeno,
+                peso,
+                talla,
+                nivel,
+                cita_medica_codigo,
+                fuera_plazo,
+                fecha_registro,
+            ) in self._repositorio.obtener_valoraciones_triaje()
+        ]
 
     # =========================================================
     # GENERAR CÓDIGOS
@@ -497,7 +551,7 @@ class SistemaSalud:
 
         if cita.hora not in self.HORARIOS_ATENCION:
             raise ValueError(
-                "El horario de atención es de 07:00 a 18:00, con turnos cada 30 minutos."
+                "El horario de atención es de 07:00 a 18:00, con turnos cada 20 minutos."
             )
 
         self._validar_fecha_hora_futura(cita.fecha_hora)
@@ -517,10 +571,12 @@ class SistemaSalud:
         )
 
     HORARIOS_ATENCION = tuple(
-        (datetime.strptime("07:00", "%H:%M") + timedelta(minutes=30 * paso))
+        (datetime.strptime("07:00", "%H:%M") + timedelta(minutes=20 * paso))
         .strftime("%H:%M")
-        for paso in range(22)
+        for paso in range(33)
     )
+
+    DURACION_CITA_MINUTOS = 20
 
     def _validar_fecha_hora_futura(self, fecha_hora):
         if fecha_hora <= datetime.now():
@@ -619,6 +675,107 @@ class SistemaSalud:
 
         return sorted(horarios)
 
+    def horarios_disponibles_para_profesional(
+        self, profesional_codigo, fecha, paciente_codigo=None
+    ):
+        from servicios.validaciones import normalizar_fecha
+
+        horarios = self.horarios_disponibles(profesional_codigo, fecha)
+        if paciente_codigo is None:
+            return horarios
+        return [
+            hora
+            for hora in horarios
+            if not any(
+                cita.paciente.codigo == paciente_codigo
+                and cita.fecha == normalizar_fecha(fecha)
+                and cita.hora == hora
+                and cita.estado in {"Pendiente", "Reprogramada", "En proceso"}
+                for cita in self._citas
+            )
+        ]
+
+    def obtener_personal_triaje(self):
+        codigos = None
+        if hasattr(self._repositorio, "obtener_codigos_personal_por_rol"):
+            codigos = self._repositorio.obtener_codigos_personal_por_rol("triaje")
+        return [
+            profesional
+            for profesional in self._personal
+            if "enfermer" in profesional.especialidad.casefold()
+            and (codigos is None or profesional.codigo_profesional in codigos)
+        ]
+
+    def horarios_disponibles_para_triaje(self, fecha, paciente_codigo=None):
+        return sorted(
+            {
+                hora
+                for profesional in self.obtener_personal_triaje()
+                for hora in self.horarios_disponibles_para_profesional(
+                    profesional.codigo_profesional,
+                    fecha,
+                    paciente_codigo,
+                )
+            }
+        )
+
+    def crear_cita_regular(self, paciente, fecha, motivo, hora):
+        """Reserva la cita regular con un técnico de triaje disponible."""
+        from servicios.validaciones import normalizar_fecha, normalizar_hora
+
+        fecha = normalizar_fecha(fecha)
+        hora = normalizar_hora(hora)
+        personal = [
+            profesional
+            for profesional in self.obtener_personal_triaje()
+            if hora in self.horarios_disponibles_para_profesional(
+                profesional.codigo_profesional,
+                fecha,
+                paciente.codigo,
+            )
+        ]
+        if not personal:
+            raise ValueError("No hay personal de triaje disponible en ese horario.")
+        cita = Cita(
+            self.generar_codigo_cita(),
+            paciente,
+            random.choice(personal),
+            fecha,
+            motivo,
+            "Pendiente",
+            hora,
+            tipo_cita="Regular",
+        )
+        self.registrar_cita(cita)
+        return cita
+
+    def crear_cita_directa(self, paciente, profesional, fecha, motivo, hora):
+        """Reserva una cita directa con el profesional elegido por el paciente."""
+        from servicios.validaciones import normalizar_fecha, normalizar_hora
+
+        if profesional not in self._personal or "enfermer" in profesional.especialidad.casefold():
+            raise ValueError("Selecciona un profesional médico registrado.")
+        fecha = normalizar_fecha(fecha)
+        hora = normalizar_hora(hora)
+        if hora not in self.horarios_disponibles_para_profesional(
+            profesional.codigo_profesional,
+            fecha,
+            paciente.codigo,
+        ):
+            raise ValueError("Ese horario ya no está disponible para el profesional elegido.")
+        cita = Cita(
+            self.generar_codigo_cita(),
+            paciente,
+            profesional,
+            fecha,
+            motivo,
+            "Pendiente",
+            hora,
+            tipo_cita="Directa",
+        )
+        self.registrar_cita(cita)
+        return cita
+
     def profesionales_disponibles_para_cita(
         self, fecha, hora, paciente_codigo=None
     ):
@@ -691,6 +848,302 @@ class SistemaSalud:
         self.registrar_cita(cita)
         return cita
 
+    def _valoracion_para_cita(self, cita):
+        for valoracion in self._valoraciones_triaje:
+            if (
+                valoracion.cita_codigo == cita.codigo
+                or valoracion.cita_medica_codigo == cita.codigo
+                or cita.cita_origen_codigo == valoracion.cita_medica_codigo
+            ):
+                return valoracion
+        return None
+
+    def _nivel_urgencia_cita(self, cita):
+        valoracion = self._valoracion_para_cita(cita)
+        if valoracion:
+            return valoracion.nivel
+        return None
+
+    def puede_derivar_cita(self, cita):
+        valoracion = self._valoracion_para_cita(cita)
+        return bool(
+            cita.tipo_cita == "Consulta general"
+            and valoracion
+            and valoracion.nivel in {1, 2}
+        )
+
+    def crear_cita_derivacion_urgente(self, cita_origen, especialista, motivo):
+        """Agenda la derivación urgente indicada por el médico general."""
+        if not self.puede_derivar_cita(cita_origen):
+            raise ValueError("Solo se permite derivación para los niveles 1 y 2 del triaje.")
+        if especialista not in self._personal or "enfermer" in especialista.especialidad.casefold():
+            raise ValueError("Selecciona un profesional especialista registrado.")
+        if especialista.especialidad.strip().casefold() == "medicina general":
+            raise ValueError("La derivación urgente debe dirigirse a un área especializada.")
+        nivel = self._nivel_urgencia_cita(cita_origen)
+        existente = next(
+            (
+                cita
+                for cita in self._citas
+                if cita.tipo_cita == "Derivación urgente"
+                and cita.cita_origen_codigo == cita_origen.codigo
+                and cita.estado in {"Pendiente", "Reprogramada", "En proceso"}
+            ),
+            None,
+        )
+        if existente:
+            if existente.profesional.codigo_profesional != especialista.codigo_profesional:
+                raise ValueError("Ya existe una cita de derivación urgente para esta valoración.")
+            return existente
+
+        ahora = datetime.now()
+        turno = self._buscar_hueco_especialista(especialista, ahora, cita_origen.paciente.codigo, nivel)
+        if turno is None:
+            raise ValueError("No se encontró un horario disponible para la derivación urgente.")
+        fecha, hora, _, _ = turno
+        derivacion = Cita(
+            self.generar_codigo_cita(),
+            cita_origen.paciente,
+            especialista,
+            fecha,
+            f"Derivación urgente: {motivo}",
+            "Pendiente",
+            hora,
+            tipo_cita="Derivación urgente",
+            cita_origen_codigo=cita_origen.codigo,
+        )
+        self.registrar_cita(derivacion)
+        return derivacion
+
+    def _buscar_hueco_especialista(self, profesional, desde, paciente_codigo, nivel):
+        fecha_base = desde.date()
+        for dia in range(120):
+            fecha = fecha_base + timedelta(days=dia)
+            fecha_texto = fecha.strftime("%d/%m/%Y")
+            for hora in self.HORARIOS_ATENCION:
+                momento = datetime.strptime(f"{fecha_texto} {hora}", "%d/%m/%Y %H:%M")
+                if momento < desde or momento <= datetime.now():
+                    continue
+                if any(
+                    cita.paciente.codigo == paciente_codigo
+                    and cita.fecha == fecha_texto
+                    and cita.hora == hora
+                    and cita.estado in {"Pendiente", "Reprogramada", "En proceso"}
+                    for cita in self._citas
+                ):
+                    continue
+                ocupada = next(
+                    (
+                        cita
+                        for cita in self._citas
+                        if cita.profesional.codigo_profesional == profesional.codigo_profesional
+                        and cita.fecha == fecha_texto
+                        and cita.hora == hora
+                        and cita.estado in {"Pendiente", "Reprogramada", "En proceso"}
+                    ),
+                    None,
+                )
+                if ocupada is None:
+                    return fecha_texto, hora, momento, None
+                nivel_existente = self._nivel_urgencia_cita(ocupada)
+                if nivel not in {1, 2} or (nivel_existente is not None and nivel_existente <= nivel):
+                    continue
+                siguiente = self._hueco_sin_reprogramar(
+                    profesional,
+                    momento + timedelta(minutes=self.DURACION_CITA_MINUTOS),
+                    ocupada.paciente.codigo,
+                )
+                if siguiente is None:
+                    continue
+                nueva_fecha, nueva_hora, _ = siguiente
+                self._repositorio.actualizar_agenda_cita(
+                    ocupada.codigo,
+                    nueva_fecha,
+                    nueva_hora,
+                    "Reprogramada",
+                )
+                ocupada.fecha = nueva_fecha
+                ocupada.hora = nueva_hora
+                ocupada.estado = "Reprogramada"
+                return fecha_texto, hora, momento, ocupada
+        return None
+
+    def _hueco_sin_reprogramar(self, profesional, desde, paciente_codigo=None):
+        fecha_base = desde.date()
+        for dia in range(120):
+            fecha = fecha_base + timedelta(days=dia)
+            fecha_texto = fecha.strftime("%d/%m/%Y")
+            for hora in self.HORARIOS_ATENCION:
+                momento = datetime.strptime(
+                    f"{fecha_texto} {hora}", "%d/%m/%Y %H:%M"
+                )
+                if momento < desde or momento <= datetime.now():
+                    continue
+                if hora not in self.horarios_disponibles(
+                    profesional.codigo_profesional, fecha_texto
+                ):
+                    continue
+                if paciente_codigo and any(
+                    cita.paciente.codigo == paciente_codigo
+                    and cita.fecha == fecha_texto
+                    and cita.hora == hora
+                    and cita.estado in {"Pendiente", "Reprogramada", "En proceso"}
+                    for cita in self._citas
+                ):
+                    continue
+                return fecha_texto, hora, momento
+        return None
+
+    def _buscar_turno_medico_general(
+        self, desde, paciente_codigo, nivel
+    ):
+        generales = [
+            profesional
+            for profesional in self._personal
+            if profesional.especialidad.strip().casefold() == "medicina general"
+        ]
+        if not generales:
+            raise ValueError("No hay médicos generales registrados para la consulta posterior.")
+
+        fecha_base = desde.date()
+        for dia in range(120):
+            fecha = fecha_base + timedelta(days=dia)
+            fecha_texto = fecha.strftime("%d/%m/%Y")
+            for hora in self.HORARIOS_ATENCION:
+                momento = datetime.strptime(
+                    f"{fecha_texto} {hora}", "%d/%m/%Y %H:%M"
+                )
+                if momento <= desde:
+                    continue
+                for profesional in generales:
+                    if paciente_codigo and any(
+                        cita.paciente.codigo == paciente_codigo
+                        and cita.fecha == fecha_texto
+                        and cita.hora == hora
+                        and cita.estado in {"Pendiente", "Reprogramada", "En proceso"}
+                        for cita in self._citas
+                    ):
+                        continue
+                    ocupadas = [
+                        cita
+                        for cita in self._citas
+                        if cita.profesional.codigo_profesional
+                        == profesional.codigo_profesional
+                        and cita.fecha == fecha_texto
+                        and cita.hora == hora
+                        and cita.estado in {"Pendiente", "Reprogramada", "En proceso"}
+                    ]
+                    if not ocupadas:
+                        return profesional, fecha_texto, hora, momento, None
+                    if nivel not in {1, 2} or len(ocupadas) != 1:
+                        continue
+                    ocupada = ocupadas[0]
+                    nivel_existente = self._nivel_urgencia_cita(ocupada)
+                    # Las citas sin valoración de triaje se tratan como prioridad ordinaria.
+                    if nivel_existente is not None and nivel_existente <= nivel:
+                        continue
+                    siguiente = self._hueco_sin_reprogramar(
+                        profesional,
+                        momento + timedelta(minutes=self.DURACION_CITA_MINUTOS),
+                        ocupada.paciente.codigo,
+                    )
+                    if siguiente is None:
+                        continue
+                    nueva_fecha, nueva_hora, _ = siguiente
+                    self._repositorio.actualizar_agenda_cita(
+                        ocupada.codigo,
+                        nueva_fecha,
+                        nueva_hora,
+                        "Reprogramada",
+                    )
+                    ocupada.fecha = nueva_fecha
+                    ocupada.hora = nueva_hora
+                    ocupada.estado = "Reprogramada"
+                    return profesional, fecha_texto, hora, momento, ocupada
+        raise ValueError("No se encontró un horario para la consulta posterior.")
+
+    def registrar_valoracion_triaje(
+        self,
+        cita_triaje,
+        enfermero,
+        temperatura,
+        presion_arterial,
+        frecuencia_cardiaca,
+        saturacion_oxigeno,
+        peso,
+        talla,
+        nivel,
+    ):
+        """Guarda signos vitales y asigna la consulta general priorizada."""
+        if cita_triaje.tipo_cita != "Regular" or cita_triaje not in self._citas:
+            raise ValueError("La cita no corresponde a una cita regular de triaje.")
+        if enfermero not in self.obtener_personal_triaje():
+            raise ValueError("La valoración debe registrarla personal autorizado de triaje.")
+        if cita_triaje.profesional.codigo_profesional != enfermero.codigo_profesional:
+            raise ValueError("Esta cita de triaje está asignada a otro técnico.")
+        if any(item.cita_codigo == cita_triaje.codigo for item in self._valoraciones_triaje):
+            raise ValueError("Esta cita ya tiene una valoración de triaje registrada.")
+
+        ahora = datetime.now()
+        valores = ValoracionTriaje(
+            cita_triaje.codigo,
+            enfermero.codigo_profesional,
+            temperatura,
+            presion_arterial,
+            frecuencia_cardiaca,
+            saturacion_oxigeno,
+            peso,
+            talla,
+            nivel,
+            fecha_registro=ahora,
+        )
+        profesional, fecha, hora, momento, movida = self._buscar_turno_medico_general(
+            ahora,
+            cita_triaje.paciente.codigo,
+            valores.nivel,
+        )
+        cita_medica = Cita(
+            self.generar_codigo_cita(),
+            cita_triaje.paciente,
+            profesional,
+            fecha,
+            cita_triaje.motivo,
+            "Pendiente",
+            hora,
+            tipo_cita="Consulta general",
+            cita_origen_codigo=cita_triaje.codigo,
+        )
+        valores.cita_medica_codigo = cita_medica.codigo
+        valores.fuera_plazo = (
+            (momento - ahora).total_seconds() / 60
+            > (20 if valores.nivel == 1 else valores.plazo_minutos)
+        )
+        self.registrar_cita(cita_medica)
+        self._repositorio.guardar_valoracion_triaje(valores)
+        self._valoraciones_triaje.append(valores)
+        self.actualizar_estado_cita(cita_triaje.codigo, "Atendida")
+        return cita_medica, movida, valores
+
+    def obtener_citas_triaje_pendientes(self, enfermero_codigo):
+        valoradas = {item.cita_codigo for item in self._valoraciones_triaje}
+        return sorted(
+            [
+                cita
+                for cita in self._citas
+                if cita.tipo_cita == "Regular"
+                and cita.profesional.codigo_profesional == enfermero_codigo
+                and cita.codigo not in valoradas
+                and cita.estado in {"Pendiente", "Reprogramada", "En proceso"}
+            ],
+            key=lambda cita: cita.fecha_hora,
+        )
+
+    def obtener_valoraciones_triaje(self):
+        return list(self._valoraciones_triaje)
+
+    def obtener_valoracion_para_cita(self, cita):
+        return self._valoracion_para_cita(cita)
+
     def reprogramar_cita(self, codigo_cita, fecha, hora):
         cita = next(
             (item for item in self._citas if item.codigo == codigo_cita),
@@ -707,7 +1160,7 @@ class SistemaSalud:
         hora_nueva = normalizar_hora(hora)
         if hora_nueva not in self.HORARIOS_ATENCION:
             raise ValueError(
-                "El horario de atención es de 07:00 a 18:00, con turnos cada 30 minutos."
+                "El horario de atención es de 07:00 a 18:00, con turnos cada 20 minutos."
             )
         momento = datetime.strptime(
             f"{fecha_nueva} {hora_nueva}",
@@ -735,7 +1188,7 @@ class SistemaSalud:
         self.actualizar_estado_cita(codigo_cita, "Cancelada")
 
     def actualizar_citas_vencidas(self, ahora=None):
-        """Sincroniza automáticamente cita y atención con el turno de 30 minutos."""
+        """Sincroniza automáticamente cita y atención con el turno de 20 minutos."""
         ahora = ahora or datetime.now()
         cambios = 0
         atenciones_por_cita = {
@@ -747,7 +1200,7 @@ class SistemaSalud:
                 continue
 
             atencion = atenciones_por_cita.get(cita.codigo)
-            fin_turno = cita.fecha_hora + timedelta(minutes=30)
+            fin_turno = cita.fecha_hora + timedelta(minutes=self.DURACION_CITA_MINUTOS)
 
             if atencion and atencion.estado == "Finalizada":
                 if cita.estado != "Atendida":
@@ -846,6 +1299,17 @@ class SistemaSalud:
                 "atención médica registrada."
             )
 
+        if atencion.profesional_derivado is not None:
+            if not self.puede_derivar_cita(cita):
+                raise ValueError(
+                    "Medicina General solo puede realizar una derivación inmediata en los niveles 1 y 2 de triaje."
+                )
+            self.crear_cita_derivacion_urgente(
+                cita,
+                atencion.profesional_derivado,
+                atencion.diagnostico,
+            )
+
         self._repositorio.guardar_atencion(
             atencion
         )
@@ -877,6 +1341,17 @@ class SistemaSalud:
         )
         if atencion is None:
             raise ValueError("No se encontró la atención médica.")
+        if profesional_derivado is not None and not self.puede_derivar_cita(atencion.cita):
+            raise ValueError(
+                "Medicina General solo puede realizar una derivación inmediata en los niveles 1 y 2 de triaje."
+            )
+        cita_derivacion = None
+        if profesional_derivado is not None:
+            cita_derivacion = self.crear_cita_derivacion_urgente(
+                atencion.cita,
+                profesional_derivado,
+                diagnostico,
+            )
         atencion.diagnostico = diagnostico
         if profesional_derivado is not None:
             atencion.profesional_derivado = profesional_derivado
@@ -908,6 +1383,29 @@ class SistemaSalud:
             codigo_atencion,
             "En proceso" if es_medico_remitente else "Finalizada",
         )
+        if cita_derivacion is not None and not es_medico_remitente:
+            self.actualizar_estado_cita(cita_derivacion.codigo, "Atendida")
+        es_especialista_derivado = (
+            atencion.profesional_derivado is not None
+            and profesional_autor is not None
+            and profesional_autor.codigo_profesional
+            == atencion.profesional_derivado.codigo_profesional
+        )
+        if es_especialista_derivado:
+            cita_derivada = next(
+                (
+                    item
+                    for item in self._citas
+                    if item.tipo_cita == "Derivación urgente"
+                    and item.cita_origen_codigo == atencion.cita.codigo
+                    and item.profesional.codigo_profesional
+                    == profesional_autor.codigo_profesional
+                    and item.estado in {"Pendiente", "Reprogramada", "En proceso"}
+                ),
+                None,
+            )
+            if cita_derivada:
+                self.actualizar_estado_cita(cita_derivada.codigo, "Atendida")
 
     # =========================================================
     # ESTADOS DE CITAS

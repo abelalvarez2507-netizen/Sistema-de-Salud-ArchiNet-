@@ -2848,7 +2848,7 @@ class VentanaPrincipal:
         """Muestra debajo de la fecha los turnos libres del profesional."""
         tk.Label(
             contenedor,
-            text="Horarios disponibles (turnos de 30 minutos, 07:00–18:00; último inicio 17:30):",
+            text="Horarios disponibles (turnos de 20 minutos, 07:00–18:00; último inicio 17:40):",
             font=FUENTE_NORMAL_BOLD,
         ).pack(pady=(8, 4))
         hora_var = tk.StringVar(value="")

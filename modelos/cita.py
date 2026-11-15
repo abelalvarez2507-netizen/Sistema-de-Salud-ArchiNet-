@@ -15,6 +15,13 @@ _FECHA_GENERACION_AHORA = object()
 class Cita:
     """Representa una cita entre un paciente y un profesional."""
 
+    TIPOS_VALIDOS = {
+        "Directa",
+        "Regular",
+        "Consulta general",
+        "Derivación urgente",
+    }
+
     ESTADOS_VALIDOS = {
         "Pendiente",
         "En proceso",
@@ -34,6 +41,8 @@ class Cita:
         estado="Pendiente",
         hora="09:00",
         fecha_generacion=_FECHA_GENERACION_AHORA,
+        tipo_cita="Directa",
+        cita_origen_codigo=None,
     ):
         if paciente is None or not isinstance(paciente, Paciente):
             raise ValueError("La cita debe tener un paciente válido.")
@@ -47,6 +56,8 @@ class Cita:
         self.hora = hora
         self.motivo = motivo
         self.estado = estado
+        self.tipo_cita = tipo_cita
+        self.cita_origen_codigo = cita_origen_codigo
         if fecha_generacion is _FECHA_GENERACION_AHORA:
             self._fecha_generacion = datetime.now()
         else:
@@ -134,6 +145,28 @@ class Cita:
             )
         self._estado = valor
 
+    @property
+    def tipo_cita(self):
+        return self._tipo_cita
+
+    @tipo_cita.setter
+    def tipo_cita(self, valor):
+        if valor not in self.TIPOS_VALIDOS:
+            raise ValueError("El tipo de cita no es válido.")
+        self._tipo_cita = valor
+
+    @property
+    def cita_origen_codigo(self):
+        return self._cita_origen_codigo
+
+    @cita_origen_codigo.setter
+    def cita_origen_codigo(self, valor):
+        self._cita_origen_codigo = (
+            validar_codigo(valor, "El código de la cita relacionada")
+            if valor
+            else None
+        )
+
     def mostrar_informacion(self):
         return (
             f"Cita: {self.codigo} | "
@@ -141,6 +174,7 @@ class Cita:
             f"Profesional: {self.profesional.nombre} | "
             f"Fecha: {self.fecha} | "
             f"Hora: {self.hora} | "
+            f"Tipo: {self.tipo_cita} | "
             f"Motivo: {self.motivo} | "
             f"Estado: {self.estado}"
         )

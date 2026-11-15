@@ -3,6 +3,7 @@ from datetime import datetime
 from tkinter import messagebox
 
 from interfaz.campos import configurar_mascara_fecha
+from modelos.especialidades import ESPECIALIDADES_MEDICAS
 from interfaz.estilos import (
     COLOR_BLANCO,
     COLOR_FONDO,
@@ -162,193 +163,270 @@ class PacienteCitasMixin:
         if not self.paciente_autenticado():
             return
 
-        medicos = [
-            profesional
-            for profesional in self.sistema.obtener_personal()
-            if "enfermer" not in profesional.especialidad.casefold()
-        ]
-        if not medicos:
-            messagebox.showwarning(
-                "Sin profesionales",
-                "Todavía no hay médicos registrados para reservar una cita.",
-            )
-            return
-
         pantalla = self._crear_pantalla_interna(
             "Cita directa" if directa else "Cita regular",
             volver=self.mostrar_opciones_cita,
         )
-        encabezado_cita = tk.Frame(pantalla, bg=COLOR_FONDO)
-        encabezado_cita.pack(fill="x", padx=60, pady=(0, 12))
         tk.Label(
-            encabezado_cita,
+            pantalla,
             text=f"Paciente: {self.paciente_actual.nombre}",
             font=FUENTE_SUBTITULO,
             fg=COLOR_GRIS_CLARO,
             bg=COLOR_FONDO,
-        ).pack()
-
-        etiqueta_generacion = tk.Label(
-            encabezado_cita,
-            text="",
-            font=("Arial", 9, "bold"),
-            fg=COLOR_ROJO,
-            bg=COLOR_FONDO,
-            anchor="e",
-        )
-        etiqueta_generacion.place(relx=1, rely=0.5, anchor="e")
-
-        def actualizar_reloj_generacion():
-            try:
-                ahora = datetime.now()
-                etiqueta_generacion.configure(
-                    text=(
-                        "Fecha y hora de generación de cita: "
-                        f"{ahora.strftime('%d/%m/%Y %H:%M:%S')}"
-                    )
-                )
-                etiqueta_generacion.after(1000, actualizar_reloj_generacion)
-            except tk.TclError:
-                return
-
-        actualizar_reloj_generacion()
-
+        ).pack(pady=(0, 12))
         formulario = tk.Frame(pantalla, bg=COLOR_PANEL, padx=24, pady=18)
         formulario.pack(fill="x", padx=60, pady=10)
+        zona = tk.Frame(formulario, bg=COLOR_PANEL)
+        zona.pack(fill="x")
 
-        tk.Label(
-            formulario,
-            text="Atención médica general",
-            bg=COLOR_PANEL,
-            fg=COLOR_TEXTO,
-            font=FUENTE_BOTON,
-        ).pack(anchor="w")
+        def mostrar_reserva(profesional=None):
+            for widget in zona.winfo_children():
+                widget.destroy()
+            if profesional is None and directa:
+                return
+            tk.Label(
+                zona,
+                text=(
+                    f"Profesional elegido: {profesional.nombre} · {profesional.especialidad}"
+                    if profesional
+                    else "Cita regular con el personal de triaje"
+                ),
+                font=FUENTE_BOTON,
+                bg=COLOR_PANEL,
+                fg=COLOR_TEXTO,
+            ).pack(anchor="w", pady=(5, 12))
+            selecciones_sintomas, entrada_otro = self._crear_selector_sintomas(zona)
+            tk.Label(
+                zona,
+                text="Fecha (DD/MM/AAAA):",
+                bg=COLOR_PANEL,
+                fg=COLOR_TEXTO,
+            ).pack(anchor="w")
+            entrada_fecha = tk.Entry(
+                zona,
+                width=20,
+                justify="center",
+                bg=COLOR_PANEL_CLARO,
+                fg=COLOR_TEXTO,
+                insertbackground=COLOR_TEXTO,
+                relief="flat",
+            )
+            entrada_fecha.pack(anchor="w", pady=(4, 12), ipady=6)
+            configurar_mascara_fecha(entrada_fecha)
+            entrada_fecha.delete(0, tk.END)
+            tk.Label(
+                zona,
+                text="Horarios disponibles · turnos de 20 minutos (07:00–17:40):",
+                font=FUENTE_BOTON,
+                bg=COLOR_PANEL,
+                fg=COLOR_TEXTO,
+            ).pack(anchor="w")
+            hora_var = tk.StringVar(value="")
+            menu_hora = tk.OptionMenu(zona, hora_var, "")
+            menu_hora.configure(bg=COLOR_PANEL_CLARO, fg=COLOR_TEXTO, relief="flat")
+            menu_hora.pack(anchor="w", pady=(4, 10))
 
-        tk.Label(formulario, text="Fecha (DD/MM/AAAA):", bg=COLOR_PANEL, fg=COLOR_TEXTO).pack(anchor="w")
-        entrada_fecha = tk.Entry(
-            formulario,
-            width=20,
-            justify="center",
-            bg=COLOR_PANEL_CLARO,
-            fg=COLOR_TEXTO,
-            insertbackground=COLOR_TEXTO,
-            relief="flat",
-        )
-        entrada_fecha.pack(anchor="w", pady=(4, 12), ipady=6)
-        configurar_mascara_fecha(entrada_fecha)
-        # Ambas modalidades comienzan sin una fecha seleccionada.
-        entrada_fecha.delete(0, tk.END)
-
-        tk.Label(
-            formulario,
-            text="Horarios disponibles (turnos de 30 minutos):",
-            font=FUENTE_BOTON,
-            bg=COLOR_PANEL,
-            fg=COLOR_TEXTO,
-        ).pack(anchor="w")
-        tk.Label(
-            formulario,
-            text="Atención de 07:00 a 18:00",
-            font=("Arial", 9),
-            bg=COLOR_PANEL,
-            fg=COLOR_GRIS,
-        ).pack(anchor="w", pady=(2, 6))
-
-        hora_var = tk.StringVar(value="")
-        menu_hora = tk.OptionMenu(formulario, hora_var, "")
-        menu_hora.configure(bg=COLOR_PANEL_CLARO, fg=COLOR_TEXTO, relief="flat")
-        menu_hora.pack(anchor="w", pady=(0, 12))
-
-        def actualizar_horarios(event=None):
-            try:
-                fecha = normalizar_fecha(entrada_fecha.get())
-                horarios = self.sistema.horarios_disponibles_para_cita(
-                    fecha,
-                    paciente_codigo=self.paciente_actual.codigo,
-                )
-            except ValueError:
-                horarios = []
-            menu = menu_hora["menu"]
-            menu.delete(0, "end")
-            if horarios:
-                for hora in horarios:
+            def actualizar_horarios(event=None):
+                try:
+                    fecha = normalizar_fecha(entrada_fecha.get())
+                    if directa:
+                        horarios = self.sistema.horarios_disponibles_para_profesional(
+                            profesional.codigo_profesional,
+                            fecha,
+                            paciente_codigo=self.paciente_actual.codigo,
+                        )
+                    else:
+                        horarios = self.sistema.horarios_disponibles_para_triaje(
+                            fecha,
+                            paciente_codigo=self.paciente_actual.codigo,
+                        )
+                except ValueError:
+                    horarios = []
+                menu = menu_hora["menu"]
+                menu.delete(0, "end")
+                if horarios:
+                    for disponible in horarios:
+                        menu.add_command(
+                            label=disponible,
+                            command=lambda valor=disponible: hora_var.set(valor),
+                        )
+                    hora_var.set(horarios[0])
+                else:
                     menu.add_command(
-                        label=hora,
-                        command=lambda valor=hora: hora_var.set(valor),
+                        label="Sin horarios para esa fecha",
+                        command=lambda: None,
                     )
-                hora_var.set(horarios[0])
+                    hora_var.set("")
+
+            tk.Button(
+                zona,
+                text="Ver horarios disponibles",
+                command=actualizar_horarios,
+                font=FUENTE_BOTON,
+                bg=COLOR_ROJO,
+                fg=COLOR_BLANCO,
+                activebackground=COLOR_ROJO_CLARO,
+                relief="flat",
+                cursor="hand2",
+                padx=12,
+                pady=6,
+            ).pack(anchor="w", pady=(0, 12))
+            entrada_fecha.bind("<FocusOut>", actualizar_horarios)
+            entrada_fecha.bind("<Return>", actualizar_horarios)
+
+            def guardar():
+                try:
+                    fecha = normalizar_fecha(entrada_fecha.get())
+                    if not hora_var.get():
+                        raise ValueError("Selecciona un horario disponible.")
+                    motivo = self._obtener_motivo_sintomas(
+                        selecciones_sintomas,
+                        entrada_otro,
+                    )
+                    if directa:
+                        cita = self.sistema.crear_cita_directa(
+                            self.paciente_actual,
+                            profesional,
+                            fecha,
+                            motivo,
+                            hora_var.get(),
+                        )
+                    else:
+                        cita = self.sistema.crear_cita_regular(
+                            self.paciente_actual,
+                            fecha,
+                            motivo,
+                            hora_var.get(),
+                        )
+                    messagebox.showinfo(
+                        "Cita solicitada",
+                        (
+                            "Tu cita se generó el "
+                            f"{cita.fecha_generacion.strftime('%d/%m/%Y %H:%M:%S')} "
+                            f"y quedó agendada para el {cita.fecha} a las {cita.hora}.\n"
+                            f"Profesional: {cita.profesional.nombre} "
+                            f"({cita.profesional.especialidad})."
+                        ),
+                    )
+                    self.crear_interfaz()
+                except (TypeError, ValueError) as error:
+                    messagebox.showerror("No se pudo registrar la cita", str(error))
+
+            tk.Button(
+                zona,
+                text="Confirmar cita",
+                command=guardar,
+                font=FUENTE_BOTON,
+                bg=COLOR_ROJO,
+                fg=COLOR_BLANCO,
+                activebackground=COLOR_ROJO_CLARO,
+                relief="flat",
+                cursor="hand2",
+                padx=16,
+                pady=9,
+            ).pack(anchor="w", pady=(8, 0))
+
+        if directa:
+            tk.Label(
+                formulario,
+                text="Elige el área médica",
+                font=FUENTE_BOTON,
+                bg=COLOR_PANEL,
+                fg=COLOR_TEXTO,
+            ).pack(anchor="w", pady=(0, 8))
+            panel_areas = tk.Frame(formulario, bg=COLOR_PANEL)
+            panel_areas.pack(fill="x")
+
+            def seleccionar_area(area):
+                for widget in zona.winfo_children():
+                    widget.destroy()
+                profesionales = [
+                    profesional
+                    for profesional in self.sistema.obtener_personal()
+                    if "enfermer" not in profesional.especialidad.casefold()
+                    and profesional.especialidad.strip().casefold() == area.casefold()
+                ]
+                tk.Label(
+                    zona,
+                    text=f"Profesionales del área de {area}",
+                    font=FUENTE_BOTON,
+                    bg=COLOR_PANEL,
+                    fg=COLOR_TEXTO,
+                ).pack(anchor="w", pady=(10, 6))
+                if not profesionales:
+                    tk.Label(
+                        zona,
+                        text="Esta área todavía no tiene profesionales registrados. Elige otra especialidad.",
+                        bg=COLOR_PANEL,
+                        fg=COLOR_ROJO,
+                        wraplength=700,
+                        justify="left",
+                    ).pack(anchor="w", pady=(0, 10))
+                    return
+                opciones = {"Selecciona un profesional": None}
+                for profesional in profesionales:
+                    etiqueta = f"{profesional.nombre} · {profesional.especialidad}"
+                    opciones[etiqueta] = profesional
+                menu_profesional_var = tk.StringVar(value="Selecciona un profesional")
+
+                def elegir_profesional(etiqueta):
+                    profesional = opciones.get(etiqueta)
+                    if profesional is not None:
+                        mostrar_reserva(profesional)
+
+                selector = tk.OptionMenu(
+                    zona,
+                    menu_profesional_var,
+                    *opciones.keys(),
+                    command=elegir_profesional,
+                )
+                selector.configure(bg=COLOR_PANEL_CLARO, fg=COLOR_TEXTO, relief="flat")
+                selector.pack(anchor="w", pady=(0, 8))
+
+            for indice, area in enumerate(ESPECIALIDADES_MEDICAS):
+                tk.Button(
+                    panel_areas,
+                    text=area,
+                    command=lambda valor=area: seleccionar_area(valor),
+                    font=("Arial", 9, "bold"),
+                    bg=COLOR_PANEL_CLARO if indice % 2 == 0 else COLOR_BLANCO,
+                    fg=COLOR_TEXTO,
+                    activebackground=COLOR_ROJO_CLARO,
+                    relief="flat",
+                    wraplength=180,
+                    width=23,
+                    height=2,
+                    cursor="hand2",
+                ).grid(
+                    row=indice // 3,
+                    column=indice % 3,
+                    padx=5,
+                    pady=4,
+                    sticky="ew",
+                )
+            for columna in range(3):
+                panel_areas.columnconfigure(columna, weight=1)
+        else:
+            tk.Label(
+                formulario,
+                text=(
+                    "La cita regular inicia en triaje. El personal registrará la valoración; "
+                    "después el sistema asignará una consulta con medicina general."
+                ),
+                bg=COLOR_PANEL,
+                fg=COLOR_TEXTO,
+                wraplength=760,
+                justify="left",
+            ).pack(anchor="w", pady=(0, 10))
+            if not self.sistema.obtener_personal_triaje():
+                tk.Label(
+                    formulario,
+                    text="No hay técnicos de triaje con cuenta activa para asignar citas.",
+                    bg=COLOR_PANEL,
+                    fg=COLOR_ROJO,
+                ).pack(anchor="w")
             else:
-                menu.add_command(
-                    label="Ingrese una fecha valida",
-                    command=lambda: None,
-                )
-                hora_var.set("")
-
-        self._boton_cita = tk.Button(
-            formulario,
-            text="Ver horarios disponibles",
-            command=actualizar_horarios,
-            font=FUENTE_BOTON,
-            bg=COLOR_ROJO,
-            fg=COLOR_BLANCO,
-            activebackground=COLOR_ROJO_CLARO,
-            relief="flat",
-            cursor="hand2",
-            padx=12,
-            pady=6,
-        )
-        self._boton_cita.pack(anchor="w", pady=(0, 12))
-        entrada_fecha.bind("<FocusOut>", actualizar_horarios)
-        entrada_fecha.bind("<Return>", actualizar_horarios)
-
-        selecciones_sintomas, entrada_otro = self._crear_selector_sintomas(formulario)
-
-        def guardar():
-            try:
-                fecha = normalizar_fecha(entrada_fecha.get())
-                if not hora_var.get():
-                    raise ValueError("Selecciona un horario disponible.")
-                motivo = self._obtener_motivo_sintomas(
-                    selecciones_sintomas,
-                    entrada_otro,
-                )
-                cita = self.sistema.crear_cita_asignacion_automatica(
-                    self.paciente_actual,
-                    fecha,
-                    motivo,
-                    hora_var.get(),
-                )
-                messagebox.showinfo(
-                    "Cita solicitada",
-                    (
-                        "Tu cita se generó el "
-                        f"{cita.fecha_generacion.strftime('%d/%m/%Y %H:%M:%S')} "
-                        f"y quedó agendada para el {cita.fecha} a las {cita.hora}.\n"
-                        f"Profesional: {cita.profesional.nombre} "
-                        f"({cita.profesional.especialidad})."
-                    ),
-                )
-                self.crear_interfaz()
-            except ValueError as error:
-                messagebox.showerror("No se pudo registrar la cita", str(error))
-
-        tk.Button(
-            formulario,
-            text="Confirmar cita",
-            command=guardar,
-            font=FUENTE_BOTON,
-            bg=COLOR_ROJO,
-            fg=COLOR_BLANCO,
-            activebackground=COLOR_ROJO_CLARO,
-            relief="flat",
-            cursor="hand2",
-            padx=16,
-            pady=8,
-        ).pack(anchor="w", pady=(8, 0))
-
-    # =========================================================
-    # MIS CITAS
-    # =========================================================
+                mostrar_reserva()
 
     def mostrar_citas(self):
 
@@ -441,6 +519,17 @@ class PacienteCitasMixin:
                     tk.END,
                     f"Fecha y hora: {cita.fecha} · {cita.hora}\n"
                 )
+
+                texto.insert(
+                    tk.END,
+                    f"Tipo: {cita.tipo_cita}\n"
+                )
+                valoracion = self.sistema.obtener_valoracion_para_cita(cita)
+                if valoracion:
+                    texto.insert(
+                        tk.END,
+                        f"Triaje: nivel {valoracion.nivel} · {valoracion.color}\n"
+                    )
 
                 texto.insert(
                     tk.END,
