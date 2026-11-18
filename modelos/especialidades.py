@@ -1,4 +1,4 @@
-"""Catálogo amplio de áreas disponibles para cita directa."""
+"""Catálogos de especialidades profesionales y áreas de atención."""
 
 ESPECIALIDADES_MEDICAS = (
     "Alergología e Inmunología",
@@ -59,6 +59,8 @@ ESPECIALIDADES_MEDICAS = (
     "Neurología",
     "Neurología Pediátrica",
     "Nutrición Clínica",
+    "Nutrición",
+    "Odontología",
     "Obstetricia",
     "Oftalmología",
     "Oncología Médica",
@@ -79,3 +81,113 @@ ESPECIALIDADES_MEDICAS = (
     "Urología",
     "Urología Pediátrica",
 )
+
+
+# La cita directa se inicia por servicio/área de atención. Cada servicio puede
+# incluir profesionales de una o varias especialidades registradas.
+ESPECIALIDADES_POR_AREA = {
+    "Medicina interna y familiar": (
+        "Medicina Interna",
+        "Medicina Familiar",
+        "Medicina Familiar y Comunitaria",
+        "Geriatría",
+        "Medicina Preventiva y Salud Pública",
+    ),
+    "Emergencias y cuidados intensivos": (
+        "Medicina de Emergencias",
+        "Medicina de Emergencias y Desastres",
+        "Medicina Intensiva",
+        "Anestesiología",
+    ),
+    "Salud de la mujer": ("Ginecología", "Ginecología y Obstetricia", "Obstetricia"),
+    "Pediatría": (
+        "Pediatría",
+        "Adolescentología",
+        "Cardiología Pediátrica",
+        "Endocrinología Pediátrica",
+        "Gastroenterología Pediátrica",
+        "Hematología Pediátrica",
+        "Infectología Pediátrica",
+        "Nefrología Pediátrica",
+        "Neonatología",
+        "Neumología Pediátrica",
+        "Neurología Pediátrica",
+        "Oncología Pediátrica",
+        "Psiquiatría Infantil y Adolescente",
+        "Reumatología Pediátrica",
+        "Urología Pediátrica",
+        "Cirugía Pediátrica",
+    ),
+    "Cirugía y anestesiología": (
+        "Cirugía Cardiovascular",
+        "Cirugía de Cabeza, Cuello y Maxilofacial",
+        "Cirugía General",
+        "Cirugía Maxilofacial",
+        "Cirugía Oncológica",
+        "Cirugía Plástica",
+        "Cirugía Plástica y Reconstructiva",
+        "Cirugía Torácica",
+        "Cirugía de Tórax y Cardiovascular",
+        "Cirugía Vascular",
+        "Neurocirugía",
+    ),
+    "Corazón y circulación": ("Cardiología", "Cirugía Cardiovascular", "Cirugía Vascular"),
+    "Salud mental": ("Psiquiatría", "Psiquiatría Infantil y Adolescente", "Psicología"),
+    "Oftalmología y otorrinolaringología": ("Oftalmología", "Otorrinolaringología"),
+    "Digestivo y nutrición": (
+        "Gastroenterología",
+        "Gastroenterología Pediátrica",
+        "Nutrición Clínica",
+        "Nutrición",
+    ),
+    "Riñón y vías urinarias": ("Nefrología", "Nefrología Pediátrica", "Urología", "Urología Pediátrica"),
+    "Respiratorio": ("Neumología", "Neumología Pediátrica"),
+    "Endocrinología y metabolismo": ("Endocrinología", "Endocrinología Pediátrica"),
+    "Oncología y hematología": (
+        "Hematología",
+        "Hematología Pediátrica",
+        "Oncología Médica",
+        "Oncología Pediátrica",
+        "Oncología Radioterápica",
+    ),
+    "Huesos, articulaciones y rehabilitación": (
+        "Ortopedia y Traumatología",
+        "Reumatología",
+        "Reumatología Pediátrica",
+        "Medicina Física y Rehabilitación",
+        "Medicina del Deporte",
+    ),
+    "Neurología": ("Neurología", "Neurología Pediátrica", "Neurocirugía"),
+    "Piel": ("Dermatología",),
+    "Diagnóstico por imágenes y laboratorio": (
+        "Anatomía Patológica",
+        "Patología Clínica",
+        "Radiología",
+        "Radiología e Imágenes",
+        "Medicina Nuclear",
+    ),
+    "Infectología y medicina tropical": (
+        "Infectología",
+        "Infectología Pediátrica",
+        "Medicina de Enfermedades Infecciosas y Tropicales",
+        "Medicina Tropical",
+    ),
+    "Alergias e inmunología": ("Alergología e Inmunología",),
+    "Odontología": ("Odontología",),
+    "Salud ocupacional y medicina legal": (
+        "Medicina del Trabajo",
+        "Medicina Ocupacional y del Medio Ambiente",
+        "Medicina Legal",
+    ),
+    "Medicina hiperbárica": ("Medicina Hiperbárica y Subacuática",),
+    "Cuidados paliativos y del dolor": ("Medicina Paliativa y del Dolor",),
+    "Genética": ("Genética Médica",),
+    "Radioterapia oncológica": (
+        "Medicina Oncológica",
+        "Oncología Radioterápica",
+        "Radioterapia",
+    ),
+    "Gestión de salud": ("Administración y Gestión en Salud",),
+}
+
+AREAS_ATENCION = tuple(ESPECIALIDADES_POR_AREA)

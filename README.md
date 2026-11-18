@@ -43,8 +43,9 @@ Tkinter para la interfaz gráfica y SQLite para guardar la información.
   se registran signos vitales y uno de cinco niveles de prioridad. Al guardar la
   valoración, el sistema agenda una consulta con Medicina General y da prioridad
   a los niveles 1 y 2, reprogramando una cita ordinaria cuando haga falta.
-- La cita directa muestra un catálogo de áreas médicas y permite elegir el
-  profesional registrado de esa especialidad antes de buscar horarios.
+- La cita directa permite elegir un área de atención y muestra a los
+  profesionales cuyas especialidades pertenecen a esa área. Las especialidades
+  se seleccionan desde el catálogo compartido al registrar profesionales.
 - El triaje guarda temperatura, presión arterial, frecuencia cardíaca, saturación
   de oxígeno, peso, talla y el nivel 1–5 seleccionado por el técnico. Los niveles
   1 y 2 reciben prioridad de Medicina General; si corresponde, el médico general

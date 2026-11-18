@@ -8,6 +8,7 @@ from modelos.personal_enfermeria import PersonalEnfermeria
 from modelos.cita import Cita
 from modelos.atencion_medica import AtencionMedica
 from modelos.medicamento_recetado import MedicamentoRecetado
+from modelos.especialidades import ESPECIALIDADES_MEDICAS
 
 from servicios.sistema_salud import SistemaSalud
 from servicios.reportes import Reportes
@@ -3600,19 +3601,15 @@ class VentanaPrincipal:
             pady=5
         )
 
-        especialidades = [
-            "Medicina General",
-            "Obstetricia",
-            "Odontología",
-            "Psicología",
-            "Nutrición",
-            "Medicina Familiar",
-            "Urología",
-            "Pediatría",
-            "Neurología",
-        ]
-
-        especialidad_var = tk.StringVar(value="Enfermería" if es_enfermeria else especialidades[0])
+        especialidades = ESPECIALIDADES_MEDICAS
+        especialidad_inicial = (
+            "Enfermería"
+            if es_enfermeria
+            else "Medicina General"
+            if "Medicina General" in especialidades
+            else especialidades[0]
+        )
+        especialidad_var = tk.StringVar(value=especialidad_inicial)
         if not es_enfermeria:
             tk.OptionMenu(ventana, especialidad_var, *especialidades).pack()
 

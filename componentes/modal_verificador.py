@@ -12,6 +12,7 @@ except ImportError:  # pragma: no cover
     ImageTk = None
 
 from servicios.autenticacion import ServicioAutenticacion
+from modelos.especialidades import ESPECIALIDADES_MEDICAS
 from servicios.validaciones import (
     validar_dni_en_edicion,
     validar_nombre_en_edicion,
@@ -616,18 +617,13 @@ class ModalVerificador(tk.Frame):
                     bg=COLOR_BLANCO,
                     anchor="w",
                 ).pack(fill="x", pady=(5, 2))
-                especialidades = (
-                    "Medicina General",
-                    "Obstetricia",
-                    "Odontología",
-                    "Psicología",
-                    "Nutrición",
-                    "Medicina Familiar",
-                    "Urología",
-                    "Pediatría",
-                    "Neurología",
+                especialidades = ESPECIALIDADES_MEDICAS
+                especialidad_inicial = (
+                    "Medicina General"
+                    if "Medicina General" in especialidades
+                    else especialidades[0]
                 )
-                self.especialidad_var = tk.StringVar(value=especialidades[0])
+                self.especialidad_var = tk.StringVar(value=especialidad_inicial)
                 tk.OptionMenu(
                     self.formulario,
                     self.especialidad_var,

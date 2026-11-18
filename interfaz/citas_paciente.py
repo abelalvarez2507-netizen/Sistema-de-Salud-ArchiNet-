@@ -3,7 +3,7 @@ from datetime import datetime
 from tkinter import messagebox
 
 from interfaz.campos import configurar_mascara_fecha
-from modelos.especialidades import ESPECIALIDADES_MEDICAS
+from modelos.especialidades import AREAS_ATENCION, ESPECIALIDADES_POR_AREA
 from interfaz.estilos import (
     COLOR_BLANCO,
     COLOR_FONDO,
@@ -179,11 +179,169 @@ class PacienteCitasMixin:
         zona = tk.Frame(formulario, bg=COLOR_PANEL)
         zona.pack(fill="x")
 
-        def mostrar_reserva(profesional=None):
+        def limpiar_zona():
             for widget in zona.winfo_children():
                 widget.destroy()
+
+        def volver_al_inicio_de_zona(vista):
+            """Recalcula el contenido y vuelve arriba tras cambiar de vista."""
+            if vista is not self.pantalla_actual or not vista.winfo_exists():
+                return
+            vista.update_idletasks()
+            region = vista.canvas.bbox("all")
+            if region is not None:
+                vista.canvas.configure(scrollregion=region)
+            vista.canvas.yview_moveto(0)
+
+        def cambiar_vista():
+            # Espera a que Tk procese los widgets destruidos/creados para que
+            # el alto del formulario y el scrollregion reflejen la vista nueva.
+            vista = self.pantalla_actual
+            if vista is not None:
+                self.ventana.after_idle(
+                    lambda vista=vista: volver_al_inicio_de_zona(vista)
+                )
+
+        def mostrar_areas():
+            limpiar_zona()
+            tk.Label(
+                zona,
+                text="Elige el área de atención",
+                font=FUENTE_BOTON,
+                bg=COLOR_PANEL,
+                fg=COLOR_TEXTO,
+            ).pack(anchor="w", pady=(0, 8))
+
+            panel_areas = tk.Frame(zona, bg=COLOR_PANEL)
+            panel_areas.pack(fill="x")
+            for indice, area in enumerate(AREAS_ATENCION):
+                tk.Button(
+                    panel_areas,
+                    text=area,
+                    command=lambda valor=area: seleccionar_area(valor),
+                    font=("Arial", 9, "bold"),
+                    bg=COLOR_PANEL_CLARO if indice % 2 == 0 else COLOR_BLANCO,
+                    fg=COLOR_TEXTO,
+                    activebackground=COLOR_ROJO_CLARO,
+                    relief="flat",
+                    wraplength=180,
+                    width=23,
+                    height=2,
+                    cursor="hand2",
+                ).grid(
+                    row=indice // 3,
+                    column=indice % 3,
+                    padx=5,
+                    pady=4,
+                    sticky="ew",
+                )
+            for columna in range(3):
+                panel_areas.columnconfigure(columna, weight=1)
+            cambiar_vista()
+
+        def seleccionar_area(area):
+            limpiar_zona()
+            tk.Button(
+                zona,
+                text="← Volver a áreas",
+                command=mostrar_areas,
+                font=FUENTE_BOTON,
+                bg=COLOR_PANEL_CLARO,
+                fg=COLOR_TEXTO,
+                relief="flat",
+                cursor="hand2",
+                padx=12,
+                pady=7,
+            ).pack(anchor="w", pady=(0, 10))
+            especialidades_area = {
+                especialidad.strip().casefold()
+                for especialidad in ESPECIALIDADES_POR_AREA.get(area, ())
+            }
+            profesionales = [
+                profesional
+                for profesional in self.sistema.obtener_personal()
+                if "enfermer" not in profesional.especialidad.casefold()
+                and profesional.especialidad.strip().casefold() in especialidades_area
+            ]
+            tk.Label(
+                zona,
+                text=f"Profesionales del área de {area}",
+                font=FUENTE_BOTON,
+                bg=COLOR_PANEL,
+                fg=COLOR_TEXTO,
+            ).pack(anchor="w", pady=(10, 6))
+            if not profesionales:
+                tk.Label(
+                    zona,
+                    text="Esta área todavía no tiene profesionales registrados. Elige otra área.",
+                    bg=COLOR_PANEL,
+                    fg=COLOR_ROJO,
+                    wraplength=700,
+                    justify="left",
+                ).pack(anchor="w", pady=(0, 10))
+                cambiar_vista()
+                return
+            tk.Label(
+                zona,
+                text="Selecciona al profesional que deseas atenderte:",
+                bg=COLOR_PANEL,
+                fg=COLOR_TEXTO,
+            ).pack(anchor="w", pady=(0, 8))
+            panel_profesionales = tk.Frame(zona, bg=COLOR_PANEL)
+            panel_profesionales.pack(fill="x", pady=(0, 10))
+            for indice, profesional in enumerate(profesionales):
+                tarjeta = tk.Button(
+                    panel_profesionales,
+                    text=(
+                        f"{profesional.nombre}\n"
+                        f"Edad: {profesional.edad} años\n"
+                        f"Código profesional: {profesional.codigo_profesional}\n"
+                        "Seleccionar profesional"
+                    ),
+                    command=lambda item=profesional: mostrar_reserva(item, area),
+                    font=("Arial", 10, "bold"),
+                    bg=COLOR_PANEL_CLARO,
+                    fg=COLOR_TEXTO,
+                    activebackground=COLOR_ROJO_CLARO,
+                    activeforeground=COLOR_BLANCO,
+                    relief="flat",
+                    anchor="w",
+                    justify="left",
+                    wraplength=240,
+                    width=31,
+                    height=5,
+                    cursor="hand2",
+                    padx=12,
+                    pady=10,
+                )
+                tarjeta.grid(
+                    row=indice // 3,
+                    column=indice % 3,
+                    padx=5,
+                    pady=5,
+                    sticky="ew",
+                )
+            for columna in range(3):
+                panel_profesionales.columnconfigure(columna, weight=1)
+            cambiar_vista()
+
+        def mostrar_reserva(profesional=None, area=None):
+            limpiar_zona()
             if profesional is None and directa:
                 return
+            if directa:
+                tk.Button(
+                    zona,
+                    text="← Volver a profesionales",
+                    command=lambda: seleccionar_area(area),
+                    font=FUENTE_BOTON,
+                    bg=COLOR_PANEL_CLARO,
+                    fg=COLOR_TEXTO,
+                    relief="flat",
+                    cursor="hand2",
+                    padx=12,
+                    pady=7,
+                ).pack(anchor="w", pady=(0, 10))
             tk.Label(
                 zona,
                 text=(
@@ -325,87 +483,11 @@ class PacienteCitasMixin:
                 padx=16,
                 pady=9,
             ).pack(anchor="w", pady=(8, 0))
+            if directa:
+                cambiar_vista()
 
         if directa:
-            tk.Label(
-                formulario,
-                text="Elige el área médica",
-                font=FUENTE_BOTON,
-                bg=COLOR_PANEL,
-                fg=COLOR_TEXTO,
-            ).pack(anchor="w", pady=(0, 8))
-            panel_areas = tk.Frame(formulario, bg=COLOR_PANEL)
-            panel_areas.pack(fill="x")
-
-            def seleccionar_area(area):
-                for widget in zona.winfo_children():
-                    widget.destroy()
-                profesionales = [
-                    profesional
-                    for profesional in self.sistema.obtener_personal()
-                    if "enfermer" not in profesional.especialidad.casefold()
-                    and profesional.especialidad.strip().casefold() == area.casefold()
-                ]
-                tk.Label(
-                    zona,
-                    text=f"Profesionales del área de {area}",
-                    font=FUENTE_BOTON,
-                    bg=COLOR_PANEL,
-                    fg=COLOR_TEXTO,
-                ).pack(anchor="w", pady=(10, 6))
-                if not profesionales:
-                    tk.Label(
-                        zona,
-                        text="Esta área todavía no tiene profesionales registrados. Elige otra especialidad.",
-                        bg=COLOR_PANEL,
-                        fg=COLOR_ROJO,
-                        wraplength=700,
-                        justify="left",
-                    ).pack(anchor="w", pady=(0, 10))
-                    return
-                opciones = {"Selecciona un profesional": None}
-                for profesional in profesionales:
-                    etiqueta = f"{profesional.nombre} · {profesional.especialidad}"
-                    opciones[etiqueta] = profesional
-                menu_profesional_var = tk.StringVar(value="Selecciona un profesional")
-
-                def elegir_profesional(etiqueta):
-                    profesional = opciones.get(etiqueta)
-                    if profesional is not None:
-                        mostrar_reserva(profesional)
-
-                selector = tk.OptionMenu(
-                    zona,
-                    menu_profesional_var,
-                    *opciones.keys(),
-                    command=elegir_profesional,
-                )
-                selector.configure(bg=COLOR_PANEL_CLARO, fg=COLOR_TEXTO, relief="flat")
-                selector.pack(anchor="w", pady=(0, 8))
-
-            for indice, area in enumerate(ESPECIALIDADES_MEDICAS):
-                tk.Button(
-                    panel_areas,
-                    text=area,
-                    command=lambda valor=area: seleccionar_area(valor),
-                    font=("Arial", 9, "bold"),
-                    bg=COLOR_PANEL_CLARO if indice % 2 == 0 else COLOR_BLANCO,
-                    fg=COLOR_TEXTO,
-                    activebackground=COLOR_ROJO_CLARO,
-                    relief="flat",
-                    wraplength=180,
-                    width=23,
-                    height=2,
-                    cursor="hand2",
-                ).grid(
-                    row=indice // 3,
-                    column=indice % 3,
-                    padx=5,
-                    pady=4,
-                    sticky="ew",
-                )
-            for columna in range(3):
-                panel_areas.columnconfigure(columna, weight=1)
+            mostrar_areas()
         else:
             tk.Label(
                 formulario,
